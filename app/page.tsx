@@ -32,7 +32,7 @@ export default function Home() {
     return;
   }
 
-  router.push("/dashboard");
+  router.push("/homepage");
 }
 
   async function handleGoogleLogin(){
