@@ -48,7 +48,7 @@ export default function Home() {
       <main>
         {/* Login Box */}
         <div className="flex flex-col w-110 rounded-lg bg-gray-100 shadow-lg p-15">
-          <h1 className="text-black self-center text-3xl">Log in</h1>
+          <h1 className="text-black self-center text-3xl font-bold">Log in</h1>
           {error && (
             <p className="mt-4 text-sm text-red-500 text-center">{error}</p>
           )}
@@ -56,14 +56,14 @@ export default function Home() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="juandelacruz@gmail.com"
+          placeholder="Email"
           required
           />
           <input className="bg-white shadow-md rounded-md px-4 py-1 mt-5" 
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="********"
+          placeholder="Password"
           required 
           />
           <button
@@ -90,7 +90,7 @@ export default function Home() {
             </button>
           </div>
           <div className="flex w-full justify-center mt-2">
-          <p>New user?</p><Link className="ml-2 text-blue-600" href="">Sign up</Link>
+          <p>New user?</p><Link className="ml-2 text-blue-600" href="/signup">Sign up</Link>
           </div>
           
         </div>
