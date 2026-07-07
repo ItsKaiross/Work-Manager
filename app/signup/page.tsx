@@ -71,7 +71,7 @@ export default function SignUpPage() {
     email,
     password,
     options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
     },
     });
 
@@ -79,7 +79,6 @@ console.log("Data:", data);
 console.log("Error:", error);
 
     setLoading(false);
-    
 
     if (error) {
         setMessage(error.message);
