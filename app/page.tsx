@@ -2,13 +2,9 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-)
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -32,7 +28,7 @@ export default function Home() {
   async function handleGoogleLogin(){
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback`},
+      options: { redirectTo: `${window.location.origin}api/auth/google/route.ts`},
     });
     if (error) setError(error.message);
   }
