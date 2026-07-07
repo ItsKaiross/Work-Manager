@@ -12,11 +12,60 @@ export default function SignUpPage() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const passwordChecks = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+
+    function validatePassword(password: string) {
+    if (password.length < 8) {
+        return "Password must be at least 8 characters.";
+    }
+
+    if (!/[A-Z]/.test(password)) {
+        return "Password must contain at least one uppercase letter.";
+    }
+
+    if (!/[a-z]/.test(password)) {
+        return "Password must contain at least one lowercase letter.";
+    }
+
+    if (!/[0-9]/.test(password)) {
+        return "Password must contain at least one number.";
+    }
+
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return "Password must contain at least one special character.";
+    }
+
+    return "";
+    }
+    
+    
 
     async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
+
     setLoading(true);
     setMessage("");
+
+    if (password !== confirmPassword) {
+    setMessage("Passwords do not match.");
+    setLoading(false);
+    return;
+    }
+
+    const validationError = validatePassword(password);
+
+    if (validationError) {
+        setMessage(validationError);
+        setLoading(false);
+        return;
+    }
 
     const { error } = await supabase.auth.signUp({
         email,
@@ -60,6 +109,38 @@ export default function SignUpPage() {
             required
             minLength={6}
         />
+        
+        <input
+        type="password"
+        placeholder="Confirm Password"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        className="bg-white shadow-md rounded-md px-4 py-1 mt-5"
+        required
+        />
+
+        <div className="mt-3 text-sm space-y-1">
+        <Requirement
+            valid={passwordChecks.length}
+            text="At least 8 characters"
+        />
+        <Requirement
+            valid={passwordChecks.uppercase}
+            text="One uppercase letter"
+        />
+        <Requirement
+            valid={passwordChecks.lowercase}
+            text="One lowercase letter"
+        />
+        <Requirement
+            valid={passwordChecks.number}
+            text="One number"
+        />
+        <Requirement
+            valid={passwordChecks.special}
+            text="One special character"
+        />
+        </div>
 
         <button
             type="submit"
@@ -81,4 +162,23 @@ export default function SignUpPage() {
         </form>
     </main>
     );
+
+    function Requirement({
+    valid,
+    text,
+    }: {
+    valid: boolean;
+    text: string;
+    }) {
+    return (
+        <div
+        className={`flex items-center gap-2 ${
+            valid ? "text-green-600" : "text-gray-500"
+        }`}
+        >
+        <span>{valid ? "✔" : "✖"}</span>
+        <span>{text}</span>
+        </div>
+    );
+    }
 }
