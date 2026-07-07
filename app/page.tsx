@@ -14,21 +14,31 @@ export default function Home() {
   const router = useRouter();
 
   async function handleLogin() {
-    setError("");
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({email, password});
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      router.push("/dashboard");
-    }
+  setError("");
+  setLoading(true);
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+
+  console.log("LOGIN DATA:", data);
+  console.log("LOGIN ERROR:", error);
+
+  setLoading(false);
+
+  if (error) {
+    setError(error.message);
+    return;
   }
+
+  router.push("/dashboard");
+}
 
   async function handleGoogleLogin(){
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}api/auth/google/route.ts`},
+      options: { redirectTo: `${window.location.origin}api/auth/google`},
     });
     if (error) setError(error.message);
   }
