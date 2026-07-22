@@ -36,11 +36,7 @@ export default function Home() {
 }
 
   async function handleGoogleLogin(){
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}api/auth/google`},
-    });
-    if (error) setError(error.message);
+    window.location.href = `${API_URL}/auth/google/login`;
   }
 
   async function handleForgotPassword() {
