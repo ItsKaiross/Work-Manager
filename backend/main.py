@@ -1,4 +1,9 @@
-# app/main.py
-from starlette.middleware.sessions import SessionMiddleware
+from fastapi import FastAPI
+from app.routers import auth
 
-app.add_middleware(SessionMiddleware, secret_key=settings.jwt_secret)
+app = FastAPI(title="Work Manager API")
+app.include_router(auth.router)
+
+@app.get("/")
+async def root():
+    return {"status": "ok"}

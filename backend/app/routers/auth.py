@@ -1,38 +1,31 @@
-from fastapi import Request
-from fastapi.responses import RedirectResponse
-from sqlalchemy import select
-from app.core.oauth import oauth
-from app.core.jwt import create_access_token, create_refresh_token
-from app.models.user import User
-from app.config import settings
+# app/routers/auth.py
+from fastapi import APIRouter, Depends, HTTPException
+from app.database import get_db
+from app.schemas.auth import SignupRequest, LoginRequest, TokenResponse
+from app.core.security import hash_password, verify_password
+from app.core.jwt import create_access_token
+from app.core.deps import get_current_user
+from app.crud.user import get_user_by_email, create_user
 
-@router.get("/google/login")
-async def google_login(request: Request):
-    redirect_uri = settings.google_redirect_uri
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.get("/google/callback")
-async def google_callback(request: Request, db: AsyncSession = Depends(get_db)):
-    token = await oauth.google.authorize_access_token(request)
-    user_info = token.get("userinfo")
-    if not user_info or not user_info.get("email"):
-        raise HTTPException(status_code=400, detail="Google auth failed")
+@router.post("/signup", response_model=TokenResponse)
+async def signup(payload: SignupRequest, conn = Depends(get_db)):
+    existing = await get_user_by_email(conn, payload.email)
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-    email = user_info["email"]
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    user = await create_user(conn, payload.email, hash_password(payload.password))
+    return TokenResponse(access_token=create_access_token(user["id"]))
 
-    if not user:
-        user = User(email=email, hashed_password=None, auth_provider="google")
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
+@router.post("/login", response_model=TokenResponse)
+async def login(payload: LoginRequest, conn = Depends(get_db)):
+    user = await get_user_by_email(conn, payload.email)
+    if not user or not verify_password(payload.password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    access = create_access_token(user.id)
-    refresh = create_refresh_token(user.id)
+    return TokenResponse(access_token=create_access_token(user["id"]))
 
-    # Redirect back to frontend with tokens in the URL fragment (not query string,
-    # so they don't get logged by servers/proxies)
-    return RedirectResponse(
-        f"{settings.frontend_url}/oauth-callback#access_token={access}&refresh_token={refresh}"
-    )
+@router.get("/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return {"id": current_user["id"], "email": current_user["email"]}
