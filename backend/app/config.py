@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     jwt_secret: str
 
     class Config:
-        env_file = ".env"
+        env_file = ".env.local"
         
         
 settings = Settings()
