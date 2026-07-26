@@ -1,24 +1,29 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function OAuthCallback() {
   const router = useRouter();
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const token = params.get("access_token");
 
-    if (accessToken && refreshToken) {
-      localStorage.setItem("access_token", accessToken);
-      localStorage.setItem("refresh_token", refreshToken);
+    if (token) {
+      localStorage.setItem("access_token", token);
       router.push("/homepage");
     } else {
-      router.push("/?error=google_auth_failed");
+      setError("Google sign-in failed. Please try again.");
+      setTimeout(() => router.push("/"), 2000);
     }
   }, [router]);
 
-  return <p>Signing you in...</p>;
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-gray-600">
+        {error || "Signing you in..."}
+      </p>
+    </div>
+  );
 }

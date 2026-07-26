@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { login } from "@/lib/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 
 export default function Home() {
@@ -26,21 +28,12 @@ export default function Home() {
       setLoading(false);
     }
   }
-}
+
 
   async function handleGoogleLogin(){
     window.location.href = `${API_URL}/auth/google/login`;
   }
 
-  async function handleForgotPassword() {
-    if (!email) return setError("Enter your email first, then click forgot password.")
-    setError("");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    if (error) setError(error.message);
-    else setError("Check your inbox for a password reset link.");
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -73,7 +66,7 @@ export default function Home() {
           </button>
           <Link className="flex w-full justify-center mt-1 bottom-0 text-sm text-gray-400"
           href=""
-          onClick={(e) => { e.preventDefault(); handleForgotPassword(); }}
+          onClick={(e) => { e.preventDefault();}}
           >forgot password?</Link>
           
           <div className="flex items-center mt-5">
