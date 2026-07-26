@@ -16,23 +16,16 @@ export default function Home() {
   async function handleLogin() {
   setError("");
   setLoading(true);
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
-
-  console.log("LOGIN DATA:", data);
-  console.log("LOGIN ERROR:", error);
-
-  setLoading(false);
-
-  if (error) {
-    setError(error.message);
-    return;
+  try {
+      const data = await login(email.trim(), password);
+      localStorage.setItem("access_token", data.access_token);
+      router.push("/homepage");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
-
-  router.push("/homepage");
 }
 
   async function handleGoogleLogin(){

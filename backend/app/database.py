@@ -18,7 +18,6 @@ async def get_pool():
     return _pool
 
 async def get_db():
-    """FastAPI dependency — yields a connection from the pool for one request."""
     pool = await get_pool()
     async with pool.acquire() as conn:
         yield conn

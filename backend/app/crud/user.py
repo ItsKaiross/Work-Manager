@@ -18,5 +18,4 @@ async def create_user(conn, email: str, hashed_password: str) -> dict:
         )
         await conn.commit()
         user_id = cur.lastrowid
-
     return await get_user_by_id(conn, user_id)
