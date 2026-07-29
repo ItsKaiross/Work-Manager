@@ -19,3 +19,18 @@ async def create_user(conn, email: str, hashed_password: str) -> dict:
         await conn.commit()
         user_id = cur.lastrowid
     return await get_user_by_id(conn, user_id)
+
+async def get_or_create_google_user(conn, email: str) -> dict:
+    existing = await get_user_by_email(conn, email)
+    if existing:
+        return existing
+
+    async with conn.cursor(DictCursor) as cur:
+        await cur.execute(
+            "INSERT INTO users (email, hashed_password, auth_provider) VALUES (%s, NULL, 'google')",
+            (email,),
+        )
+        await conn.commit()
+        user_id = cur.lastrowid
+
+    return await get_user_by_id(conn, user_id)
