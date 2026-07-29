@@ -1,0 +1,8 @@
+pip install httpx
+pip install fastapi
+pip install uvicorn
+pip install sqlalchemy
+pip install psycopg2-binary
+pip install alembic
+pip install authlib
+pip install itsdagerous
