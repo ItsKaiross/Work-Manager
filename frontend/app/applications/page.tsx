@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/layout/Sidebar";
-import ApplicationCard from "@/components/applications/ApplicationCard";
-import StatusFilter from "@/components/applications/StatusFilter";
-import { useApplications } from "@/hooks/useApplications";
+import Sidebar from "@/app/components/layout/Sidebar";
+import ApplicationCard from "@/app/applications/ApplicationCard";
+import StatusFilter from "@/app/applications/StatusFilter";
+import { useApplications } from "@/hooks/useApplication";
 import { JobApplication } from "@/types/job_application";
 
 type Status = JobApplication["status"] | "all";

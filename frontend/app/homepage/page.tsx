@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/app/components/layout/Sidebar";
-import ApplicationCard from "@/app/components/applications/ApplicationCard";
+import ApplicationCard from "@/app/applications/ApplicationCard";
 import { useApplications } from "@/hooks/useApplication";
 
 export default function Homepage() {
