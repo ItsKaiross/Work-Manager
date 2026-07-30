@@ -1,66 +1,48 @@
 "use client";
-import { ApplicationStatus, JobApplication } from "@/types/job_application";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
-const FILTERS: { key: ApplicationStatus | "all"; label: string }[] = [
-    { key: "all", label: "All applications" },
-    { key: "saved", label: "Saved" },
-    { key: "applied", label: "Applied" },
-    { key: "interviewing", label: "Interviewing" },
-    { key: "offer", label: "Offer" },
-    { key: "rejected", label: "Rejected" },
-];
+export default function Sidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
 
-export default function Sidebar({
-    applications,
-    activeFilter,
-    onFilterChange,
-}: {
-    applications: JobApplication[];
-    activeFilter: ApplicationStatus | "all";
-    onFilterChange: (f: ApplicationStatus | "all") => void;
-}) {
-    const router = useRouter();
-function handleLogout() {
+  function handleLogout() {
     localStorage.removeItem("access_token");
     router.push("/");
-}
+  }
 
-return (
-    <aside className="w-60 shrink-0 h-screen sticky top-0 border-r border-[#2A303C] bg-[#12151B] flex flex-col px-4 py-6">
-    <p className="font-[family-name:var(--font-display)] text-xl text-[#EDEFF2] px-2 mb-8">
-        Work Manager
-    </p>
+  const links = [
+    { href: "/homepage", label: "Dashboard" },
+    { href: "/applications", label: "Applications" },
+    { href: "/applications/new", label: "Add Application" },
+  ];
 
-    <nav className="flex-1 flex flex-col gap-1">
-        {FILTERS.map((f) => {
-        const count = f.key === "all"
-            ? applications.length
-            : applications.filter((a) => a.status === f.key).length;
+  return (
+    <aside className="w-56 min-h-screen bg-gray-100 border-r border-gray-200 flex flex-col p-4">
+      <h2 className="text-xl font-bold mb-8 px-2">Work Manager</h2>
 
-        return (
-            <button
-            key={f.key}
-            onClick={() => onFilterChange(f.key)}
-            className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeFilter === f.key
-                ? "bg-[#E7A33E]/10 text-[#E7A33E]"
-                : "text-[#8B93A3] hover:bg-[#1A1F27] hover:text-[#EDEFF2]"
+      <nav className="flex flex-col gap-1 flex-1">
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`px-3 py-2 rounded-lg text-sm transition ${
+              pathname === link.href
+                ? "bg-blue-500 text-white"
+                : "text-gray-700 hover:bg-gray-200"
             }`}
-            >
-            <span>{f.label}</span>
-            <span className="font-[family-name:var(--font-mono)] text-xs">{count}</span>
-            </button>
-        );
-        })}
-    </nav>
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
 
-    <button
+      <button
         onClick={handleLogout}
-        className="px-3 py-2 rounded-lg text-sm text-[#8B93A3] hover:bg-[#1A1F27] hover:text-[#EDEFF2] text-left transition-colors"
-    >
+        className="px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition text-left"
+      >
         Log out
-    </button>
+      </button>
     </aside>
-);
+  );
 }

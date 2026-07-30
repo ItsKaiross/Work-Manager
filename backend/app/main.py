@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth
+from app.routers import auth, extract
+from starlette.middleware.sessions import SessionMiddleware
+from app.config import settings
+from backend.app.routers import job_applications
 
 app = FastAPI(title="Work Manager API")
 
@@ -13,6 +16,9 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(job_applications.router)
+app.include_router(extract.router)
+app.add_middleware(SessionMiddleware, secret_key=settings.jwt_secret)
 
 @app.get("/")
 async def root():
