@@ -6,6 +6,8 @@ import { JobApplication } from "@/types/job_application";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+const STATUS_OPTIONS = ["saved", "applied", "interviewing", "offer", "rejected", "withdrawn"];
+
 function authHeader(): Record<string, string> {
   const token = localStorage.getItem("access_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -16,6 +18,7 @@ export default function ApplicationDetailPage() {
   const router = useRouter();
   const [app, setApp] = useState<JobApplication | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -36,6 +39,31 @@ export default function ApplicationDetailPage() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [params.id, router]);
+
+  async function handleStatusChange(newStatus: string) {
+    if (!app) return;
+    setSaving(true);
+    setError("");
+
+    try {
+      const res = await fetch(`${API_URL}/applications/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(),
+        },
+        body: JSON.stringify({ ...app, status: newStatus }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update status");
+      const updated = await res.json();
+      setApp(updated);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleDelete() {
     if (!confirm("Delete this application?")) return;
@@ -67,8 +95,24 @@ export default function ApplicationDetailPage() {
               {app.location ? ` · ${app.location}` : ""}
             </p>
 
-            <div className="space-y-3 mb-8">
-              <p><span className="font-medium">Status:</span> {app.status}</p>
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={app.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  disabled={saving}
+                  className="border rounded-lg px-3 py-2 text-sm"
+                >
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                {saving && <span className="ml-2 text-xs text-gray-400">Saving...</span>}
+              </div>
+
               {app.salary_range && (
                 <p><span className="font-medium">Salary:</span> {app.salary_range}</p>
               )}
