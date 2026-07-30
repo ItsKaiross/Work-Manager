@@ -23,12 +23,28 @@ export default function Homepage() {
   if (!checked) return null;
 
   const recent = applications.slice(0, 3);
+
   const counts = {
     total: applications.length,
+    saved: applications.filter((a) => a.status === "saved").length,
     applied: applications.filter((a) => a.status === "applied").length,
     interviewing: applications.filter((a) => a.status === "interviewing").length,
     offer: applications.filter((a) => a.status === "offer").length,
+    rejected: applications.filter((a) => a.status === "rejected").length,
+    withdrawn: applications.filter((a) => a.status === "withdrawn").length,
   };
+
+  // Applications submitted (status != saved) — used for response rate
+  const submitted = applications.filter((a) => a.status !== "saved").length;
+  const responded = counts.interviewing + counts.offer + counts.rejected;
+  const responseRate = submitted > 0 ? Math.round((responded / submitted) * 100) : 0;
+
+  // Applications added in the last 7 days
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const thisWeek = applications.filter(
+    (a) => new Date(a.created_at) >= oneWeekAgo
+  ).length;
 
   return (
     <div className="flex min-h-screen">
@@ -50,22 +66,51 @@ export default function Homepage() {
 
         {!loading && !error && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            {/* Top-level summary */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
               <div className="bg-white rounded-lg shadow-sm border p-4">
                 <p className="text-2xl font-bold">{counts.total}</p>
-                <p className="text-sm text-gray-500">Total</p>
+                <p className="text-sm text-gray-500">Total Applications</p>
               </div>
               <div className="bg-white rounded-lg shadow-sm border p-4">
-                <p className="text-2xl font-bold">{counts.applied}</p>
-                <p className="text-sm text-gray-500">Applied</p>
+                <p className="text-2xl font-bold">{thisWeek}</p>
+                <p className="text-sm text-gray-500">Added This Week</p>
               </div>
               <div className="bg-white rounded-lg shadow-sm border p-4">
-                <p className="text-2xl font-bold">{counts.interviewing}</p>
-                <p className="text-sm text-gray-500">Interviewing</p>
+                <p className="text-2xl font-bold">{responseRate}%</p>
+                <p className="text-sm text-gray-500">Response Rate</p>
               </div>
               <div className="bg-white rounded-lg shadow-sm border p-4">
                 <p className="text-2xl font-bold">{counts.offer}</p>
                 <p className="text-sm text-gray-500">Offers</p>
+              </div>
+            </div>
+
+            {/* Status breakdown */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+                <p className="text-lg font-semibold">{counts.saved}</p>
+                <p className="text-xs text-gray-500">Saved</p>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+                <p className="text-lg font-semibold">{counts.applied}</p>
+                <p className="text-xs text-gray-500">Applied</p>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+                <p className="text-lg font-semibold">{counts.interviewing}</p>
+                <p className="text-xs text-gray-500">Interviewing</p>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+                <p className="text-lg font-semibold">{counts.offer}</p>
+                <p className="text-xs text-gray-500">Offer</p>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+                <p className="text-lg font-semibold">{counts.rejected}</p>
+                <p className="text-xs text-gray-500">Rejected</p>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+                <p className="text-lg font-semibold">{counts.withdrawn}</p>
+                <p className="text-xs text-gray-500">Withdrawn</p>
               </div>
             </div>
 
@@ -81,7 +126,7 @@ export default function Homepage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recent.map((app) => (
-                  <ApplicationCard key={app.id} application={app} />
+                  <ApplicationCard key={app.id} app={app} />
                 ))}
               </div>
             )}

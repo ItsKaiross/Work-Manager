@@ -53,7 +53,7 @@ export default function ApplicationsPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((app) => (
-                  <ApplicationCard key={app.id} application={app} />
+                  <ApplicationCard key={app.id} app={app} />
                 ))}
               </div>
             )}
