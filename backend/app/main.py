@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, extract
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
-from backend.app.routers import job_applications
+from app.routers import job_applications
 
 app = FastAPI(title="Work Manager API")
 
