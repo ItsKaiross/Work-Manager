@@ -1,37 +1,46 @@
 import Link from "next/link";
 import { JobApplication } from "@/types/job_application";
-import StatusStamp from "./StatusStamp";
+
+const STATUS_COLORS: Record<string, string> = {
+  saved: "bg-gray-400",
+  applied: "bg-blue-500",
+  interviewing: "bg-yellow-500",
+  offer: "bg-green-500",
+  rejected: "bg-red-500",
+  withdrawn: "bg-gray-500",
+};
 
 export default function ApplicationCard({ app }: { app: JobApplication }) {
-    const appliedDate = app.applied_date
+  const appliedDate = app.applied_date
     ? new Date(app.applied_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "Not applied yet";
 
-return (
+  return (
     <Link
-        href={`/applications/${app.id}`}
-        className="group flex items-center gap-5 bg-[#1A1F27] hover:bg-[#212733] border border-[#2A303C] rounded-xl px-5 py-4 transition-colors"
+      href={`/applications/${app.id}`}
+      className="relative block bg-white hover:bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 transition-colors shadow-sm"
     >
-        <StatusStamp status={app.status} />
+      <span
+        className={`absolute top-4 right-4 w-3 h-3 rounded-full ${STATUS_COLORS[app.status] || "bg-gray-300"}`}
+        title={app.status}
+      />
 
-    <div className="flex-1 min-w-0">
-        <p className="font-[family-name:var(--font-display)] text-lg text-[#EDEFF2] truncate">
-            {app.position}
+      <div className="pr-6">
+        <p className="font-semibold text-lg text-gray-900 truncate">
+          {app.position}
         </p>
-        <p className="text-sm text-[#8B93A3] truncate">
-            {app.company}
-            {app.location ? ` · ${app.location}` : ""}
+        <p className="text-sm text-gray-500 truncate">
+          {app.company}
+          {app.location ? ` · ${app.location}` : ""}
         </p>
-    </div>
+      </div>
 
-    <div className="hidden sm:flex flex-col items-end gap-1 shrink-0">
+      <div className="flex justify-between items-end mt-3">
         {app.salary_range && (
-        <span className="text-xs text-[#8B93A3]">{app.salary_range}</span>
+          <span className="text-xs text-gray-400">{app.salary_range}</span>
         )}
-        <span className="font-[family-name:var(--font-mono)] text-xs text-[#8B93A3]">
-        {appliedDate}
-        </span>
-    </div>
+        <span className="text-xs text-gray-400">{appliedDate}</span>
+      </div>
     </Link>
-    );
+  );
 }
