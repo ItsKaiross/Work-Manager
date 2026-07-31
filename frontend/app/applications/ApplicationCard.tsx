@@ -10,6 +10,15 @@ const STATUS_COLORS: Record<string, string> = {
   withdrawn: "bg-gray-500",
 };
 
+const STATUS_TEXT_COLORS: Record<string, string> = {
+  saved: "text-gray-400",
+  applied: "text-blue-500",
+  interviewing: "text-yellow-500",
+  offer: "text-green-500",
+  rejected: "text-red-500",
+  withdrawn: "text-gray-500",
+};
+
 export default function ApplicationCard({ app }: { app: JobApplication }) {
   const appliedDate = app.applied_date
     ? new Date(app.applied_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
@@ -28,6 +37,9 @@ export default function ApplicationCard({ app }: { app: JobApplication }) {
       <div className="pr-6">
         <p className="font-semibold text-lg text-gray-900 truncate">
           {app.position}
+        </p>
+        <p className={`text-md font-semibold truncate ${STATUS_TEXT_COLORS[app.status] || "text-gray-300" }`}>
+          {app.status}
         </p>
         <p className="text-sm text-gray-500 truncate">
           {app.company}
