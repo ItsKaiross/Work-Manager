@@ -21,8 +21,8 @@ async def create_application(conn, data: dict, user_id: int) -> dict:
         await cur.execute(
             """
             INSERT INTO job_applications
-                (user_id, company, position, job_url, location, salary_range, status, source, notes, applied_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (user_id, company, position, job_url, location, salary_range, status, source, notes, applied_date, description)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 user_id,
@@ -35,6 +35,7 @@ async def create_application(conn, data: dict, user_id: int) -> dict:
                 data.get("source"),
                 data.get("notes"),
                 data.get("applied_date"),
+                data.get("description")
             ),
         )
         await conn.commit()
@@ -52,7 +53,7 @@ async def update_application(conn, app_id: int, data: dict, user_id: int) -> dic
             """
             UPDATE job_applications
             SET company=%s, position=%s, job_url=%s, location=%s, salary_range=%s,
-                status=%s, source=%s, notes=%s, applied_date=%s
+                status=%s, source=%s, notes=%s, applied_date=%s, description=%s
             WHERE id=%s AND user_id=%s
             """,
             (
@@ -65,6 +66,7 @@ async def update_application(conn, app_id: int, data: dict, user_id: int) -> dic
                 data.get("source"),
                 data.get("notes"),
                 data.get("applied_date"),
+                data.get("description"),
                 app_id,
                 user_id,
             ),
