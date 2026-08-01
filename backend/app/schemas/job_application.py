@@ -14,6 +14,7 @@ class JobApplicationCreate(BaseModel):
     source: Optional[str] = None
     notes: Optional[str] = None
     applied_date: Optional[date] = None
+    description: Optional[str] = None
 
 class JobApplicationOut(JobApplicationCreate):
     id: int
