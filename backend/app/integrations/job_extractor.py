@@ -9,6 +9,13 @@ async def fetch_html(url: str) -> str:
         resp.raise_for_status()
         return resp.text
 
+def _clean_description(raw: str | None) -> str | None:
+    """JobPosting descriptions often contain embedded HTML — strip it to plain text."""
+    if not raw:
+        return None
+    text = BeautifulSoup(raw, "lxml").get_text(separator="\n").strip()
+    return text or None
+
 def extract_structured_data(html: str, url: str) -> dict | None:
     base_url = get_base_url(html, url)
     data = extruct.extract(html, base_url=base_url, syntaxes=["json-ld", "microdata"])
@@ -20,6 +27,7 @@ def extract_structured_data(html: str, url: str) -> dict | None:
                 "company": (item.get("hiringOrganization") or {}).get("name"),
                 "location": _extract_location(item.get("jobLocation")),
                 "salary_range": _extract_salary(item.get("baseSalary")),
+                "description": _clean_description(item.get("description")),
             }
     return None
 
@@ -46,9 +54,12 @@ def fallback_extract(html: str) -> dict:
     soup = BeautifulSoup(html, "lxml")
     title = soup.find("title")
     og_site = soup.find("meta", property="og:site_name")
+    meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", property="og:description")
+
     return {
         "position": title.text.strip() if title else None,
         "company": og_site["content"] if og_site else None,
         "location": None,
         "salary_range": None,
+        "description": meta_desc["content"].strip() if meta_desc else None,
     }
