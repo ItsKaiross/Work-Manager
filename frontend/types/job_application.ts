@@ -16,6 +16,7 @@ export interface JobApplication {
   status: ApplicationStatus;
   source?: string | null;
   notes?: string | null;
+  description?: string | null;
   applied_date?: string | null;
   created_at: string;
   updated_at?: string | null;
