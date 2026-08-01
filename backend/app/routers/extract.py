@@ -22,7 +22,7 @@ async def extract_job_details(
 
     data = extract_structured_data(html, str(payload.url))
     if not data or not data.get("position"):
-        data = fallback_extract(html)
+        data = fallback_extract(html, str(payload.url))
 
     data["job_url"] = str(payload.url)
     return data
