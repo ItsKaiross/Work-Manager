@@ -18,7 +18,7 @@ async def signup(payload: SignupRequest, conn = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    user = await create_user(conn, payload.email, hash_password(payload.password))
+    user = await create_user(conn, payload.email, hash_password(payload.password), "email")
     return TokenResponse(access_token=create_access_token(user["id"]))
 
 @router.post("/login", response_model=TokenResponse)
