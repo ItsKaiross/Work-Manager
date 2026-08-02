@@ -99,42 +99,124 @@ export default function ApplicationDetailPage() {
               {app.location ? ` · ${app.location}` : ""}
             </p>
 
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  value={app.status}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  disabled={saving}
-                  className="border rounded-lg px-3 py-2 text-sm"
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-                {saving && <span className="ml-2 text-xs text-gray-400">Saving...</span>}
-              </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-4">Job Details</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={app.status}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    disabled={saving}
+                    className="border rounded-lg px-3 py-2 text-sm w-full max-w-xs"
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  {saving && <span className="ml-2 text-xs text-gray-400">Saving...</span>}
+                </div>
 
-              {app.source && (
-                <p><span className="font-medium">Source:</span> {app.source}</p>
-              )}
-              {app.salary_range && (
-                <p><span className="font-medium">Salary:</span> {app.salary_range}</p>
-              )}
-              {app.job_url && (
-                <p>
-                  <span className="font-medium">Posting:</span>{" "}
-                  <a href={app.job_url} target="_blank" className="text-blue-600 hover:underline">
-                    View original
-                  </a>
-                </p>
-              )}
-              {app.notes && (
-                <p><span className="font-medium">Notes:</span> {app.notes}</p>
-              )}
+                {app.source && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Source:</span>
+                    <p className="text-gray-900 mt-1">{app.source}</p>
+                  </div>
+                )}
+
+                {app.location && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Location:</span>
+                    <p className="text-gray-900 mt-1">{app.location}</p>
+                  </div>
+                )}
+
+                {app.salary_range && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Salary Range:</span>
+                    <p className="text-gray-900 mt-1">{app.salary_range}</p>
+                  </div>
+                )}
+
+                {app.applied_date && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Applied Date:</span>
+                    <p className="text-gray-900 mt-1">
+                      {new Date(app.applied_date).toLocaleDateString("en-US", { 
+                        month: "long", 
+                        day: "numeric", 
+                        year: "numeric" 
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {app.job_url && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Job Posting:</span>
+                    <p className="mt-1">
+                      <a 
+                        href={app.job_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline break-all"
+                      >
+                        View original posting →
+                      </a>
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Added:</span>
+                  <p className="text-gray-900 mt-1">
+                    {new Date(app.created_at).toLocaleDateString("en-US", { 
+                      month: "long", 
+                      day: "numeric", 
+                      year: "numeric",
+                      hour: "numeric",
+                      minute: "numeric"
+                    })}
+                  </p>
+                </div>
+
+                {app.updated_at && app.updated_at !== app.created_at && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Last Updated:</span>
+                    <p className="text-gray-900 mt-1">
+                      {new Date(app.updated_at).toLocaleDateString("en-US", { 
+                        month: "long", 
+                        day: "numeric", 
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "numeric"
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {app.description && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                <h2 className="text-lg font-semibold mb-3">Job Description</h2>
+                <div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
+                  {app.description}
+                </div>
+              </div>
+            )}
+
+            {app.notes && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                <h2 className="text-lg font-semibold mb-3">Notes</h2>
+                <div className="text-gray-700 whitespace-pre-wrap text-sm">
+                  {app.notes}
+                </div>
+              </div>
+            )}
 
             <button
               onClick={handleDelete}
