@@ -53,9 +53,14 @@ export default function ApplicationCard({ app }: { app: JobApplication }) {
       </div>
 
       <div className="flex justify-between items-end mt-3">
-        {app.salary_range && (
-          <span className="text-xs text-gray-400">{app.salary_range}</span>
-        )}
+        <div className="flex items-center gap-2">
+          {app.salary_range && (
+            <span className="text-xs text-gray-400">{app.salary_range}</span>
+          )}
+          {app.currency && app.salary_range && (
+            <span className="text-xs text-gray-500 font-medium">({app.currency})</span>
+          )}
+        </div>
         <span className="text-xs text-gray-400">{appliedDate}</span>
       </div>
     </Link>

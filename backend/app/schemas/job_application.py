@@ -10,6 +10,7 @@ class JobApplicationCreate(BaseModel):
     job_url: Optional[str] = None
     location: Optional[str] = None
     salary_range: Optional[str] = None
+    currency: Optional[str] = "USD"
     status: Status = "saved"
     source: Optional[str] = None
     notes: Optional[str] = None

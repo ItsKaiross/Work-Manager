@@ -9,6 +9,7 @@ import { getAuthToken } from "@/lib/auth";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const STATUS_OPTIONS = ["saved", "applied", "interviewing", "offer", "rejected", "withdrawn"];
+const CURRENCY_OPTIONS = ["USD", "EUR", "GBP", "JPY", "CNY", "INR", "AUD", "CAD", "SGD", "PHP", "MYR", "THB", "VND", "IDR"];
 
 function authHeader(): Record<string, string> {
   const token = getAuthToken();
@@ -60,6 +61,31 @@ export default function ApplicationDetailPage() {
       });
 
       if (!res.ok) throw new Error("Failed to update status");
+      const updated = await res.json();
+      setApp(updated);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCurrencyChange(newCurrency: string) {
+    if (!app) return;
+    setSaving(true);
+    setError("");
+
+    try {
+      const res = await fetch(`${API_URL}/applications/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(),
+        },
+        body: JSON.stringify({ ...app, currency: newCurrency }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update currency");
       const updated = await res.json();
       setApp(updated);
     } catch (err: any) {
@@ -140,6 +166,22 @@ export default function ApplicationDetailPage() {
                     <p className="text-gray-900 mt-1">{app.salary_range}</p>
                   </div>
                 )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Currency
+                  </label>
+                  <select
+                    value={app.currency || "USD"}
+                    onChange={(e) => handleCurrencyChange(e.target.value)}
+                    disabled={saving}
+                    className="border rounded-lg px-3 py-2 text-sm w-full max-w-xs"
+                  >
+                    {CURRENCY_OPTIONS.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
 
                 {app.applied_date && (
                   <div>

@@ -13,6 +13,7 @@ export interface JobApplication {
   job_url?: string | null;
   location?: string | null;
   salary_range?: string | null;
+  currency?: string | null;
   status: ApplicationStatus;
   source?: string | null;
   notes?: string | null;

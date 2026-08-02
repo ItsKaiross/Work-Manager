@@ -6,6 +6,8 @@ import { extractJobDetails, createApplication } from "@/lib/api";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
 
+const CURRENCY_OPTIONS = ["USD", "EUR", "GBP", "JPY", "CNY", "INR", "AUD", "CAD", "SGD", "PHP", "MYR", "THB", "VND", "IDR"];
+
 export default function NewApplicationPage() {
   const [url, setUrl] = useState("");
   const [form, setForm] = useState<any>(null);
@@ -98,6 +100,18 @@ export default function NewApplicationPage() {
               onChange={(e) => setForm({ ...form, location: e.target.value })}
               placeholder="Location"
             />
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Currency</label>
+              <select
+                className="border rounded-lg px-4 py-2 w-full"
+                value={form.currency ?? "USD"}
+                onChange={(e) => setForm({ ...form, currency: e.target.value })}
+              >
+                {CURRENCY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
             {form.source && (
               <div className="border rounded-lg px-4 py-2 bg-gray-50">
                 <label className="text-xs text-gray-500">Source</label>
