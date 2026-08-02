@@ -113,7 +113,7 @@ export default function ApplicationDetailPage() {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 p-8 max-w-2xl">
+      <main className="flex-1 p-8">
         {loading && <p className="text-gray-500">Loading...</p>}
         {error && <p className="text-red-500">{error}</p>}
 
@@ -125,10 +125,13 @@ export default function ApplicationDetailPage() {
               {app.location ? ` · ${app.location}` : ""}
             </p>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-semibold mb-4">Job Details</h2>
-              
-              <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column - Job Details */}
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold mb-4">Job Details</h2>
+                  
+                  <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Status
@@ -239,33 +242,38 @@ export default function ApplicationDetailPage() {
                     </p>
                   </div>
                 )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
+                >
+                  Delete Application
+                </button>
+              </div>
+
+              {/* Right Column - Job Description & Notes */}
+              <div className="space-y-6">
+                {app.description && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 className="text-lg font-semibold mb-3">Job Description</h2>
+                    <div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
+                      {app.description}
+                    </div>
+                  </div>
+                )}
+
+                {app.notes && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 className="text-lg font-semibold mb-3">Notes</h2>
+                    <div className="text-gray-700 whitespace-pre-wrap text-sm">
+                      {app.notes}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-
-            {app.description && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                <h2 className="text-lg font-semibold mb-3">Job Description</h2>
-                <div className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">
-                  {app.description}
-                </div>
-              </div>
-            )}
-
-            {app.notes && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                <h2 className="text-lg font-semibold mb-3">Notes</h2>
-                <div className="text-gray-700 whitespace-pre-wrap text-sm">
-                  {app.notes}
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
-            >
-              Delete Application
-            </button>
           </>
         )}
       </main>
