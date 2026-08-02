@@ -1,5 +1,12 @@
+"use client";
+import { useState } from "react";
 import Link from "next/link";
 import { JobApplication } from "@/types/job_application";
+import { getAuthToken } from "@/lib/auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const STATUS_OPTIONS = ["saved", "applied", "interviewing", "offer", "rejected", "withdrawn"];
 
 const STATUS_COLORS: Record<string, string> = {
   saved: "bg-gray-400",
@@ -19,10 +26,51 @@ const STATUS_TEXT_COLORS: Record<string, string> = {
   withdrawn: "text-gray-500",
 };
 
-export default function ApplicationCard({ app }: { app: JobApplication }) {
+export default function ApplicationCard({ app: initialApp }: { app: JobApplication }) {
+  const [app, setApp] = useState(initialApp);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
   const appliedDate = app.applied_date
     ? new Date(app.applied_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "Not applied yet";
+
+  async function handleStatusChange(newStatus: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setUpdating(true);
+    setShowStatusMenu(false);
+
+    const token = getAuthToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/applications/${app.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ...app, status: newStatus }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setApp(updated);
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  function toggleStatusMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowStatusMenu(!showStatusMenu);
+  }
 
   return (
     <Link
@@ -38,9 +86,40 @@ export default function ApplicationCard({ app }: { app: JobApplication }) {
         <p className="font-semibold text-lg text-gray-900 truncate">
           {app.position}
         </p>
-        <p className={`text-md font-semibold truncate ${STATUS_TEXT_COLORS[app.status] || "text-gray-300" }`}>
-          {app.status}
-        </p>
+        
+        {/* Status with dropdown */}
+        <div className="relative inline-block">
+          <button
+            onClick={toggleStatusMenu}
+            disabled={updating}
+            className={`text-md font-semibold truncate ${STATUS_TEXT_COLORS[app.status] || "text-gray-300"} hover:opacity-70 transition flex items-center gap-1`}
+          >
+            {updating ? "Updating..." : app.status}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {showStatusMenu && (
+            <div 
+              className="absolute left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1 min-w-[150px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <button
+                  key={status}
+                  onClick={(e) => handleStatusChange(status, e)}
+                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                    status === app.status ? "bg-gray-50 font-medium" : ""
+                  } ${STATUS_TEXT_COLORS[status]}`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
         <p className="text-sm text-gray-500 truncate">
           {app.company}
           {app.location ? ` · ${app.location}` : ""}
