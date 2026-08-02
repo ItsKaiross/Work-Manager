@@ -45,6 +45,11 @@ export default function ApplicationCard({ app }: { app: JobApplication }) {
           {app.company}
           {app.location ? ` · ${app.location}` : ""}
         </p>
+        {app.source && (
+          <p className="text-xs text-gray-400 mt-1 truncate">
+            Source: {app.source}
+          </p>
+        )}
       </div>
 
       <div className="flex justify-between items-end mt-3">

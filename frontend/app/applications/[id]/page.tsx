@@ -117,6 +117,9 @@ export default function ApplicationDetailPage() {
                 {saving && <span className="ml-2 text-xs text-gray-400">Saving...</span>}
               </div>
 
+              {app.source && (
+                <p><span className="font-medium">Source:</span> {app.source}</p>
+              )}
               {app.salary_range && (
                 <p><span className="font-medium">Salary:</span> {app.salary_range}</p>
               )}

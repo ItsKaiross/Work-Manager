@@ -3,7 +3,7 @@ from pydantic import BaseModel, HttpUrl
 import httpx
 
 from app.core.deps import get_current_user
-from app.integrations.job_extractor import fetch_html, extract_structured_data, fallback_extract
+from app.integrations.job_extractor import fetch_html, extract_structured_data, fallback_extract, extract_job_source
 
 router = APIRouter(prefix="/applications", tags=["extract"])
 
@@ -25,4 +25,5 @@ async def extract_job_details(
         data = fallback_extract(html, str(payload.url))
 
     data["job_url"] = str(payload.url)
+    data["source"] = extract_job_source(str(payload.url))
     return data

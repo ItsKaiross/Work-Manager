@@ -98,6 +98,12 @@ export default function NewApplicationPage() {
               onChange={(e) => setForm({ ...form, location: e.target.value })}
               placeholder="Location"
             />
+            {form.source && (
+              <div className="border rounded-lg px-4 py-2 bg-gray-50">
+                <label className="text-xs text-gray-500">Source</label>
+                <p className="text-sm font-medium">{form.source}</p>
+              </div>
+            )}
             <button
               type="submit"
               className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"

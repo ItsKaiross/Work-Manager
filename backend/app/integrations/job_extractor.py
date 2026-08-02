@@ -5,6 +5,51 @@ from w3lib.html import get_base_url
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
+def extract_job_source(url: str) -> str:
+    """Extract the job board/site name from the URL."""
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower()
+    
+    # Remove common prefixes
+    domain = re.sub(r'^(www\d*\.)', '', domain)
+    
+    # Map known job sites to friendly names
+    source_mapping = {
+        'linkedin.com': 'LinkedIn',
+        'indeed.com': 'Indeed',
+        'glassdoor.com': 'Glassdoor',
+        'monster.com': 'Monster',
+        'ziprecruiter.com': 'ZipRecruiter',
+        'careerbuilder.com': 'CareerBuilder',
+        'simplyhired.com': 'SimplyHired',
+        'dice.com': 'Dice',
+        'stackoverflow.com': 'Stack Overflow',
+        'github.com': 'GitHub Jobs',
+        'angel.co': 'AngelList',
+        'wellfound.com': 'Wellfound',
+        'greenhouse.io': 'Greenhouse',
+        'lever.co': 'Lever',
+        'workable.com': 'Workable',
+        'onlinejobs.ph': 'OnlineJobs.ph',
+        'jobstreet.com': 'JobStreet',
+        'seek.com': 'SEEK',
+        'careers-page.com': 'Careers Page',
+    }
+    
+    # Check for exact matches first
+    for key, value in source_mapping.items():
+        if key in domain:
+            return value
+    
+    # If no match, extract the main domain name
+    # e.g., "example.com" -> "Example"
+    parts = domain.split('.')
+    if len(parts) >= 2:
+        main_domain = parts[-2]
+        return main_domain.capitalize()
+    
+    return domain.capitalize()
+
 async def fetch_html(url: str) -> str:
     async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
         resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
