@@ -79,12 +79,19 @@ def extract_structured_data(html: str, url: str) -> dict | None:
 
     for item in data.get("json-ld", []):
         if item.get("@type") == "JobPosting":
+            description = _clean_description(item.get("description"))
+            company = _extract_company_name(item.get("hiringOrganization"))
+            
+            # If company not found in structured data, try extracting from description
+            if not company and description:
+                company = _extract_company_from_description(description)
+            
             return {
                 "position": item.get("title"),
-                "company": _extract_company_name(item.get("hiringOrganization")),
+                "company": company,
                 "location": _extract_location(item.get("jobLocation")),
                 "salary_range": _extract_salary(item.get("baseSalary")),
-                "description": _clean_description(item.get("description")),
+                "description": description,
             }
     return None
 
@@ -117,6 +124,40 @@ def _guess_company_from_title(title: str) -> str | None:
         parts = title.split(" - ")
         if len(parts) >= 2:
             return parts[1].strip(" -|")
+    return None
+
+def _extract_company_from_description(description: str) -> str | None:
+    """Try to extract company name from job description text."""
+    if not description:
+        return None
+    
+    # Common patterns for company mentions in descriptions
+    patterns = [
+        # "About [Company Name]" or "About Company"
+        r"(?:About|Join|At)\s+([A-Z][A-Za-z0-9&.\- ]{2,50})(?:\s+is|\s+has|\s+was|\s+offers|,|\.|:)",
+        # "Company: [Company Name]"
+        r"(?:Company|Organization|Employer):\s*([A-Z][A-Za-z0-9&.\- ]{2,50})",
+        # "[Company Name] is seeking/looking/hiring"
+        r"^([A-Z][A-Za-z0-9&.\- ]{2,50})\s+(?:is|are)\s+(?:seeking|looking|hiring|searching)",
+        # "We at [Company Name]"
+        r"[Ww]e\s+at\s+([A-Z][A-Za-z0-9&.\- ]{2,50})",
+        # "[Company Name] is a leading/top/premier"
+        r"([A-Z][A-Za-z0-9&.\- ]{2,50})\s+is\s+(?:a|an)\s+(?:leading|top|premier|global|international)",
+    ]
+    
+    # Take first few lines where company is most likely mentioned
+    lines = description.split('\n')[:10]
+    text = ' '.join(lines)
+    
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            company = match.group(1).strip()
+            # Filter out common false positives
+            exclude = ['this', 'the', 'our', 'your', 'we', 'us', 'company', 'position', 'role', 'job', 'team']
+            if company.lower() not in exclude and len(company) > 2:
+                return company
+    
     return None
 
 def _extract_onlinejobs_ph(soup: BeautifulSoup) -> dict:
@@ -174,6 +215,9 @@ def fallback_extract(html: str, url: str = "") -> dict:
     if "onlinejobs.ph" in urlparse(url).netloc:
         result = _extract_onlinejobs_ph(soup)
         if result.get("position"):
+            # Try to extract company from description if not found
+            if not result.get("company") and result.get("description"):
+                result["company"] = _extract_company_from_description(result["description"])
             return result
 
     title_tag = soup.find("title")
@@ -181,17 +225,22 @@ def fallback_extract(html: str, url: str = "") -> dict:
 
     og_site = soup.find("meta", property="og:site_name")
     meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", property="og:description")
+    description = meta_desc["content"].strip() if meta_desc and meta_desc.get("content") else None
 
     company = None
     if og_site and og_site.get("content"):
         company = og_site["content"].strip()
     if not company:
         company = _guess_company_from_title(title)
+    
+    # Try extracting from description as last resort
+    if not company and description:
+        company = _extract_company_from_description(description)
 
     return {
         "position": title,
         "company": company,
         "location": None,
         "salary_range": None,
-        "description": meta_desc["content"].strip() if meta_desc and meta_desc.get("content") else None,
+        "description": description,
     }
