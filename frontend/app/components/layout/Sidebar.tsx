@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { clearAuthToken } from "@/lib/auth";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
   function handleLogout() {
-    localStorage.removeItem("access_token");
+    clearAuthToken();
     router.push("/");
   }
 

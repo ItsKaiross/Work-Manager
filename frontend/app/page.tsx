@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login } from "@/lib/api";
+import { setAuthToken } from "@/lib/auth";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 
@@ -19,7 +20,7 @@ export default function Home() {
   setLoading(true);
   try {
       const data = await login(email.trim(), password);
-      localStorage.setItem("access_token", data.access_token);
+      setAuthToken(data.access_token);
       router.push("/homepage");
     } catch (err: any) {
       setError(err.message);

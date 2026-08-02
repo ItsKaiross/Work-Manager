@@ -1,15 +1,31 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import { extractJobDetails, createApplication } from "@/lib/api";
+import { useSessionMonitor } from "@/hooks/useSessionMonitor";
+import { getAuthToken } from "@/lib/auth";
 
 export default function NewApplicationPage() {
   const [url, setUrl] = useState("");
   const [form, setForm] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checked, setChecked] = useState(false);
   const router = useRouter();
+  
+  useSessionMonitor();
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) {
+      router.push("/");
+    } else {
+      setChecked(true);
+    }
+  }, [router]);
+
+  if (!checked) return null;
 
   async function handleExtract() {
     setError("");

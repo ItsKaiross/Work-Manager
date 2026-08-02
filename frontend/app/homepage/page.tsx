@@ -5,14 +5,18 @@ import Link from "next/link";
 import Sidebar from "@/app/components/layout/Sidebar";
 import ApplicationCard from "@/app/applications/ApplicationCard";
 import { useApplications } from "@/hooks/useApplication";
+import { useSessionMonitor } from "@/hooks/useSessionMonitor";
+import { getAuthToken } from "@/lib/auth";
 
 export default function Homepage() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
   const { applications, loading, error } = useApplications();
+  
+  useSessionMonitor();
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = getAuthToken();
     if (!token) {
       router.push("/");
     } else {

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { setAuthToken } from "@/lib/auth";
 
 export default function OAuthCallback() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function OAuthCallback() {
     const token = params.get("access_token");
 
     if (token) {
-      localStorage.setItem("access_token", token);
+      setAuthToken(token);
       router.push("/homepage");
     } else {
       setError("Google sign-in failed. Please try again.");

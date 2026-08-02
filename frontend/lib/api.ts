@@ -1,9 +1,10 @@
 import { JobApplication } from "@/types/job_application";
+import { getAuthToken } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function authHeader(): Record<string, string> {
-    const token = localStorage.getItem("access_token");
+    const token = getAuthToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

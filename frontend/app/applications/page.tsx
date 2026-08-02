@@ -6,6 +6,8 @@ import ApplicationCard from "@/app/applications/ApplicationCard";
 import StatusFilter from "@/app/applications/StatusFilter";
 import { useApplications } from "@/hooks/useApplication";
 import { JobApplication } from "@/types/job_application";
+import { useSessionMonitor } from "@/hooks/useSessionMonitor";
+import { getAuthToken } from "@/lib/auth";
 
 type Status = JobApplication["status"] | "all";
 
@@ -14,9 +16,11 @@ export default function ApplicationsPage() {
   const [checked, setChecked] = useState(false);
   const { applications, loading, error } = useApplications();
   const [activeFilter, setActiveFilter] = useState<Status>("all");
+  
+  useSessionMonitor();
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = getAuthToken();
     if (!token) {
       router.push("/");
     } else {

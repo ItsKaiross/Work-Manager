@@ -3,13 +3,15 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import { JobApplication } from "@/types/job_application";
+import { useSessionMonitor } from "@/hooks/useSessionMonitor";
+import { getAuthToken } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const STATUS_OPTIONS = ["saved", "applied", "interviewing", "offer", "rejected", "withdrawn"];
 
 function authHeader(): Record<string, string> {
-  const token = localStorage.getItem("access_token");
+  const token = getAuthToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -20,9 +22,11 @@ export default function ApplicationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  
+  useSessionMonitor();
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = getAuthToken();
     if (!token) {
       router.push("/");
       return;

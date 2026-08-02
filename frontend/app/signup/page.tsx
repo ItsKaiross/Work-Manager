@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signup } from "@/lib/api";
+import { setAuthToken } from "@/lib/auth";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const data = await signup(email.trim(), password);
-      localStorage.setItem("access_token", data.access_token);
+      setAuthToken(data.access_token);
       router.push("/homepage");
     } catch (err: any) {
       setError(err.message);
