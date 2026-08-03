@@ -16,6 +16,7 @@ export default function Sidebar() {
     { href: "/homepage", label: "Dashboard" },
     { href: "/applications", label: "Applications" },
     { href: "/applications/new", label: "Add Application" },
+    { href: "/resume", label: "Resume & Success Rate" },
   ];
 
   return (
