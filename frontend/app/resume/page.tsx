@@ -64,10 +64,18 @@ export default function ResumePage() {
       
       // Show parsed info
       console.log("Parsed resume info:", result.parsed_info);
+      console.log("Full result:", result);
       
-      // Refresh data
-      refresh();
-      setTimeout(() => refreshAnalysis(), 500);
+      // Refresh data with a longer delay to ensure backend processing is complete
+      setTimeout(() => {
+        refresh();
+        setTimeout(() => refreshAnalysis(), 300);
+      }, 500);
+      
+      // Or just reload the page to ensure fresh data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Failed to upload resume");
     } finally {

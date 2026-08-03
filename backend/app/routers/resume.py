@@ -72,7 +72,7 @@ async def upload_resume(
         )
         
         # Calculate match scores for all existing applications
-        applications = await job_crud.get_user_applications(conn, current_user["id"])
+        applications = await job_crud.get_applications_for_user(conn, current_user["id"])
         
         matched_count = 0
         if resume.get('skills') and len(resume['skills']) > 0:
