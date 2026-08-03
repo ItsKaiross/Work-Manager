@@ -23,6 +23,8 @@ export default function ApplicationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [suggestions, setSuggestions] = useState<any>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   
   useSessionMonitor();
 
@@ -107,6 +109,23 @@ export default function ApplicationDetailPage() {
       router.push("/applications");
     } else {
       setError("Failed to delete application");
+    }
+  }
+
+  async function loadSuggestions() {
+    setLoadingSuggestions(true);
+    try {
+      const res = await fetch(`${API_URL}/applications/${params.id}/suggestions`, {
+        headers: { ...authHeader() },
+      });
+      
+      if (!res.ok) throw new Error("Failed to load suggestions");
+      const data = await res.json();
+      setSuggestions(data.suggestions);
+    } catch (err: any) {
+      console.error("Failed to load suggestions:", err);
+    } finally {
+      setLoadingSuggestions(false);
     }
   }
 
@@ -291,6 +310,138 @@ export default function ApplicationDetailPage() {
                       {app.notes}
                     </div>
                   </div>
+                )}
+              </div>
+            </div>
+
+            {/* Preparation Suggestions Section */}
+            <div className="mt-8">
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <h2 className="text-xl font-bold text-gray-900">Interview Preparation Suggestions</h2>
+                  </div>
+                  
+                  {!suggestions && (
+                    <button
+                      onClick={loadSuggestions}
+                      disabled={loadingSuggestions}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {loadingSuggestions ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          Generate Suggestions
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {suggestions ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Technical Preparation */}
+                    {suggestions.technical_prep && suggestions.technical_prep.length > 0 && (
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <h3 className="font-semibold text-purple-700 mb-3 flex items-center gap-2">
+                          <span>🔧</span> Technical Prep
+                        </h3>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {suggestions.technical_prep.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-purple-500 mt-1">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Company Research */}
+                    {suggestions.company_research && suggestions.company_research.length > 0 && (
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <h3 className="font-semibold text-blue-700 mb-3 flex items-center gap-2">
+                          <span>🏢</span> Company Research
+                        </h3>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {suggestions.company_research.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-blue-500 mt-1">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Behavioral Prep */}
+                    {suggestions.behavioral_prep && suggestions.behavioral_prep.length > 0 && (
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <h3 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
+                          <span>💬</span> Behavioral Prep
+                        </h3>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {suggestions.behavioral_prep.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-green-500 mt-1">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Skills to Focus */}
+                    {suggestions.skills_to_focus && suggestions.skills_to_focus.length > 0 && (
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <h3 className="font-semibold text-orange-700 mb-3 flex items-center gap-2">
+                          <span>🎯</span> Skills to Focus
+                        </h3>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {suggestions.skills_to_focus.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-orange-500 mt-1">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Questions to Ask */}
+                    {suggestions.questions_to_ask && suggestions.questions_to_ask.length > 0 && (
+                      <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <h3 className="font-semibold text-indigo-700 mb-3 flex items-center gap-2">
+                          <span>❓</span> Questions to Ask
+                        </h3>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {suggestions.questions_to_ask.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-indigo-500 mt-1">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-600 text-sm">
+                    Click "Generate Suggestions" to get personalized interview preparation tips based on the job description and your resume.
+                  </p>
                 )}
               </div>
             </div>
