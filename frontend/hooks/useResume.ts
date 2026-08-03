@@ -137,22 +137,10 @@ export function useResumeAnalysis(resumeId?: number) {
 }
 
 export async function uploadResume(
-  file: File,
-  skills: string,
-  experienceYears?: number,
-  educationLevel?: string
-): Promise<{ message: string; resume: Resume; applications_matched: number }> {
+  file: File
+): Promise<{ message: string; resume: Resume; applications_matched: number; parsed_info: any }> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("skills", skills);
-  
-  if (experienceYears !== undefined) {
-    formData.append("experience_years", experienceYears.toString());
-  }
-  
-  if (educationLevel) {
-    formData.append("education_level", educationLevel);
-  }
 
   const token = getAuthToken();
   const response = await fetch(`${API_URL}/api/resumes/upload`, {

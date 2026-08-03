@@ -11,3 +11,5 @@ pip install mysql-connector
 pip install "bcrypt==4.0.1"
 pip install config
 pip install python-multipart
+pip install python-docx
+pip install pdfplumber

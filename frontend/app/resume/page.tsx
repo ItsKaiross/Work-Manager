@@ -18,9 +18,6 @@ export default function ResumePage() {
   
   // Form state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [skills, setSkills] = useState("");
-  const [experienceYears, setExperienceYears] = useState("");
-  const [educationLevel, setEducationLevel] = useState("");
   
   useSessionMonitor();
 
@@ -51,32 +48,22 @@ export default function ResumePage() {
       return;
     }
 
-    if (!skills.trim()) {
-      setUploadError("Please enter at least one skill");
-      return;
-    }
-
     setUploading(true);
     setUploadError(null);
     setUploadSuccess(false);
 
     try {
-      await uploadResume(
-        selectedFile,
-        skills,
-        experienceYears ? parseFloat(experienceYears) : undefined,
-        educationLevel || undefined
-      );
+      const result = await uploadResume(selectedFile);
       
       setUploadSuccess(true);
       setSelectedFile(null);
-      setSkills("");
-      setExperienceYears("");
-      setEducationLevel("");
       
       // Reset file input
       const fileInput = document.getElementById("resume-file") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
+      
+      // Show parsed info
+      console.log("Parsed resume info:", result.parsed_info);
       
       // Refresh data
       refresh();
@@ -117,6 +104,9 @@ export default function ResumePage() {
           {/* Upload Section */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">Upload Resume</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              📄 Upload your resume and we'll automatically extract your skills, experience, and education!
+            </p>
             
             <form onSubmit={handleUpload} className="space-y-4">
               <div>
@@ -137,59 +127,6 @@ export default function ResumePage() {
                 )}
               </div>
 
-              <div>
-                <label htmlFor="skills" className="block text-sm font-medium text-gray-700 mb-2">
-                  Skills (comma-separated) *
-                </label>
-                <input
-                  id="skills"
-                  type="text"
-                  value={skills}
-                  onChange={(e) => setSkills(e.target.value)}
-                  placeholder="e.g., JavaScript, React, Node.js, Python"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="experience" className="block text-sm font-medium text-gray-700 mb-2">
-                    Years of Experience
-                  </label>
-                  <input
-                    id="experience"
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    max="50"
-                    value={experienceYears}
-                    onChange={(e) => setExperienceYears(e.target.value)}
-                    placeholder="e.g., 3.5"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="education" className="block text-sm font-medium text-gray-700 mb-2">
-                    Education Level
-                  </label>
-                  <select
-                    id="education"
-                    value={educationLevel}
-                    onChange={(e) => setEducationLevel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select...</option>
-                    <option value="High School">High School</option>
-                    <option value="Associate">Associate Degree</option>
-                    <option value="Bachelor">Bachelor's Degree</option>
-                    <option value="Master">Master's Degree</option>
-                    <option value="PhD">PhD</option>
-                  </select>
-                </div>
-              </div>
-
               {uploadError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                   {uploadError}
@@ -198,7 +135,7 @@ export default function ResumePage() {
 
               {uploadSuccess && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                  Resume uploaded successfully! Match scores calculated for all applications.
+                  ✅ Resume uploaded and parsed successfully! Match scores calculated for all applications.
                 </div>
               )}
 
@@ -207,7 +144,7 @@ export default function ResumePage() {
                 disabled={uploading || !selectedFile}
                 className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                {uploading ? "Uploading..." : "Upload Resume"}
+                {uploading ? "Uploading and Parsing..." : "Upload Resume"}
               </button>
             </form>
           </div>

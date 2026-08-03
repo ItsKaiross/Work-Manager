@@ -11,6 +11,7 @@ from app.core.deps import get_current_user
 from app.crud import resume as resume_crud
 from app.crud import job_application as job_crud
 from app.schemas.resume import Resume, ResumeAnalysis
+from app.utils.resume_parser import parse_resume
 
 router = APIRouter(prefix="/api/resumes", tags=["resumes"])
 
@@ -22,13 +23,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @router.post("/upload", response_model=dict)
 async def upload_resume(
     file: UploadFile = File(...),
-    skills: Optional[str] = Form(None),
-    experience_years: Optional[float] = Form(None),
-    education_level: Optional[str] = Form(None),
-    db: Session = Depends(get_db),
+    conn = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Upload a new resume"""
+    """Upload a new resume - automatically parses skills, experience, and education"""
     # Validate file type
     allowed_types = [".pdf", ".doc", ".docx", ".txt"]
     file_ext = os.path.splitext(file.filename)[1].lower()
@@ -54,29 +52,31 @@ async def upload_resume(
     # Get file size
     file_size = os.path.getsize(file_path)
     
-    # Parse skills if provided
-    skills_list = None
-    if skills:
-        skills_list = [s.strip() for s in skills.split(",") if s.strip()]
+    # Parse resume to extract information
+    print(f"Parsing resume: {file_path}")
+    parsed_data = parse_resume(file_path)
+    print(f"Parsed data: Skills={len(parsed_data['skills'])}, Experience={parsed_data['experience_years']}, Education={parsed_data['education_level']}")
     
     # Create resume record
     try:
-        resume = resume_crud.create_resume(
-            db=db,
+        resume = await resume_crud.create_resume(
+            conn=conn,
             user_id=current_user["id"],
             filename=file.filename,
             file_path=file_path,
             file_size=file_size,
-            skills=skills_list,
-            experience_years=experience_years,
-            education_level=education_level
+            parsed_data={'raw_text': parsed_data.get('raw_text', '')},
+            skills=parsed_data.get('skills'),
+            experience_years=parsed_data.get('experience_years'),
+            education_level=parsed_data.get('education_level')
         )
         
         # Calculate match scores for all existing applications
-        applications = job_crud.get_user_applications(db, current_user["id"])
+        applications = await job_crud.get_user_applications(conn, current_user["id"])
         
-        for app in applications:
-            if resume.get('skills'):
+        matched_count = 0
+        if resume.get('skills') and len(resume['skills']) > 0:
+            for app in applications:
                 match_scores = resume_crud.calculate_match_score(
                     resume_skills=resume['skills'],
                     job_description=app.get('description', '') or '',
@@ -84,19 +84,25 @@ async def upload_resume(
                     required_experience=None
                 )
                 
-                resume_crud.save_match_score(
-                    db=db,
+                await resume_crud.save_match_score(
+                    conn=conn,
                     resume_id=resume['id'],
                     application_id=app['id'],
                     match_percentage=match_scores['match_percentage'],
                     skill_match=match_scores['skill_match'],
                     experience_match=match_scores['experience_match']
                 )
+                matched_count += 1
         
         return {
-            "message": "Resume uploaded successfully",
+            "message": "Resume uploaded and parsed successfully",
             "resume": resume,
-            "applications_matched": len(applications)
+            "applications_matched": matched_count,
+            "parsed_info": {
+                "skills_found": len(parsed_data.get('skills', [])),
+                "experience_detected": parsed_data.get('experience_years'),
+                "education_detected": parsed_data.get('education_level')
+            }
         }
     except Exception as e:
         # Clean up file if database operation fails
