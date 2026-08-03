@@ -32,8 +32,10 @@ export function useResume(resumeId?: number) {
       }
 
       const data = await response.json();
+      console.log("Fetched active resume:", data);
       setResume(data);
     } catch (err) {
+      console.error("Error fetching active resume:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
