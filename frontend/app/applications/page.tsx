@@ -34,6 +34,12 @@ export default function ApplicationsPage() {
     ? applications
     : applications.filter((a) => a.status === activeFilter);
 
+  // Debug: log first application to see if match_percentage exists
+  if (applications.length > 0) {
+    console.log("First application data:", applications[0]);
+    console.log("Has match_percentage?", applications[0].match_percentage);
+  }
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />

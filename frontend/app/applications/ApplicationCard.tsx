@@ -83,19 +83,20 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
       href={`/applications/${app.id}`}
       className="relative block bg-white hover:bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 transition-colors shadow-sm"
     >
+      {/* Status Dot */}
       <span
         className={`absolute top-4 right-4 w-3 h-3 rounded-full ${STATUS_COLORS[app.status] || "bg-gray-300"}`}
         title={app.status}
       />
       
-      {/* Match Percentage Badge */}
+      {/* Match Percentage Badge - Positioned higher to avoid overlap */}
       {app.match_percentage !== null && app.match_percentage !== undefined && (
-        <div className={`absolute top-4 right-10 px-2 py-1 rounded-full text-xs font-semibold border ${getMatchColor(app.match_percentage)}`}>
-          {Math.round(app.match_percentage)}% Match
+        <div className={`absolute top-2 right-12 px-3 py-1 rounded-full text-xs font-bold border-2 ${getMatchColor(app.match_percentage)} shadow-sm`}>
+          {Math.round(app.match_percentage)}%
         </div>
       )}
 
-      <div className="pr-6">
+      <div className="pr-24">
         <p className="font-semibold text-lg text-gray-900 truncate">
           {app.position}
         </p>
