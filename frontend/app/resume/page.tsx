@@ -2,15 +2,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
-import { useActiveResume, useResumeAnalysis, uploadResume } from "@/hooks/useResume";
+import { useActiveResume, useAllResumes, useResumeAnalysis, uploadResume } from "@/hooks/useResume";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
+import { Resume } from "@/types/resume";
 
 export default function ResumePage() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
-  const { resume, loading, error, refresh } = useActiveResume();
-  const { analysis, loading: analysisLoading, refresh: refreshAnalysis } = useResumeAnalysis(resume?.id);
+  const { resume: activeResume, loading, error, refresh } = useActiveResume();
+  const { resumes: allResumes, refresh: refreshAllResumes } = useAllResumes();
+  const [selectedResumeId, setSelectedResumeId] = useState<number | null>(null);
+  const [displayedResume, setDisplayedResume] = useState<Resume | null>(null);
+  const { analysis, loading: analysisLoading, refresh: refreshAnalysis } = useResumeAnalysis(displayedResume?.id);
   
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -29,6 +33,22 @@ export default function ResumePage() {
       setChecked(true);
     }
   }, [router]);
+
+  // Update displayed resume when active resume or selection changes
+  useEffect(() => {
+    if (selectedResumeId) {
+      const selected = allResumes.find(r => r.id === selectedResumeId);
+      setDisplayedResume(selected || null);
+    } else if (activeResume) {
+      setDisplayedResume(activeResume);
+      setSelectedResumeId(activeResume.id);
+    }
+  }, [activeResume, selectedResumeId, allResumes]);
+
+  const handleResumeSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const resumeId = parseInt(e.target.value);
+    setSelectedResumeId(resumeId);
+  };
 
   if (!checked) return null;
 
@@ -170,39 +190,68 @@ export default function ResumePage() {
                 </p>
               )}
             </div>
-          ) : resume && analysis ? (
+          ) : displayedResume && analysis ? (
             <div className="space-y-6">
+              {/* Resume Selector Dropdown */}
+              {allResumes.length > 1 && (
+                <div className="bg-white rounded-lg shadow-md p-4">
+                  <label htmlFor="resume-select" className="block text-sm font-medium text-gray-700 mb-2">
+                    📂 View Resume History ({allResumes.length} resumes)
+                  </label>
+                  <select
+                    id="resume-select"
+                    value={selectedResumeId || ''}
+                    onChange={handleResumeSelect}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {allResumes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.filename} - Uploaded {new Date(r.upload_date).toLocaleDateString()} 
+                        {r.is_active ? ' (Active)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
               {/* Current Resume Info */}
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold mb-4">Current Resume</h2>
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-xl font-semibold">Resume Details</h2>
+                  {displayedResume.is_active && (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                      Active
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <p className="text-gray-700">
-                    <span className="font-medium">Filename:</span> {resume.filename}
+                    <span className="font-medium">Filename:</span> {displayedResume.filename}
                   </p>
                   <p className="text-gray-700">
                     <span className="font-medium">Uploaded:</span>{" "}
-                    {new Date(resume.upload_date).toLocaleDateString()}
+                    {new Date(displayedResume.upload_date).toLocaleDateString()}
                   </p>
                   <p className="text-gray-700">
-                    <span className="font-medium">Size:</span> {formatFileSize(resume.file_size)}
+                    <span className="font-medium">Size:</span> {formatFileSize(displayedResume.file_size)}
                   </p>
-                  {resume.experience_years && (
+                  {displayedResume.experience_years && (
                     <p className="text-gray-700">
-                      <span className="font-medium">Experience:</span> {resume.experience_years} years
+                      <span className="font-medium">Experience:</span> {displayedResume.experience_years} years
                     </p>
                   )}
-                  {resume.education_level && (
+                  {displayedResume.education_level && (
                     <p className="text-gray-700">
-                      <span className="font-medium">Education:</span> {resume.education_level}
+                      <span className="font-medium">Education:</span> {displayedResume.education_level}
                     </p>
                   )}
                 </div>
 
-                {resume.skills && resume.skills.length > 0 && (
+                {displayedResume.skills && displayedResume.skills.length > 0 && (
                   <div className="mt-4">
                     <p className="font-medium text-gray-700 mb-2">Skills:</p>
                     <div className="flex flex-wrap gap-2">
-                      {resume.skills.map((skill, index) => (
+                      {displayedResume.skills.map((skill: string, index: number) => (
                         <span
                           key={index}
                           className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"

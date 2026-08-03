@@ -45,6 +45,49 @@ export function useResume(resumeId?: number) {
   return { resume, loading, error, refresh: fetchResume };
 }
 
+export function useAllResumes() {
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAllResumes = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_URL}/api/resumes/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch resumes");
+      }
+
+      const data = await response.json();
+      console.log("Fetched all resumes:", data);
+      setResumes(data);
+    } catch (err) {
+      console.error("Error fetching resumes:", err);
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError("Cannot connect to server. Please ensure the backend is running.");
+      } else {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllResumes();
+  }, []);
+
+  return { resumes, loading, error, refresh: fetchAllResumes };
+}
+
 export function useActiveResume() {
   const [resume, setResume] = useState<Resume | null>(null);
   const [loading, setLoading] = useState(true);
