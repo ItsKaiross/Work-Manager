@@ -217,7 +217,13 @@ export default function ResumePage() {
             <div className="text-center py-8 text-gray-500">Loading...</div>
           ) : error ? (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              {error}
+              <p className="font-semibold mb-1">Error loading resume data</p>
+              <p className="text-sm">{error}</p>
+              {error.includes("Cannot connect") && (
+                <p className="text-sm mt-2">
+                  Make sure the backend server is running on <code className="bg-red-100 px-1 rounded">http://localhost:8000</code>
+                </p>
+              )}
             </div>
           ) : resume && analysis ? (
             <div className="space-y-6">

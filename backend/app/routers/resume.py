@@ -121,10 +121,21 @@ async def get_active_resume(
     current_user: dict = Depends(get_current_user)
 ):
     """Get the most recent active resume"""
-    resume = resume_crud.get_active_resume(db, current_user["id"])
-    if not resume:
-        raise HTTPException(status_code=404, detail="No active resume found")
-    return resume
+    try:
+        resume = resume_crud.get_active_resume(db, current_user["id"])
+        if not resume:
+            raise HTTPException(status_code=404, detail="No active resume found")
+        return resume
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404)
+        raise
+    except Exception as e:
+        # Log the error and return a more helpful message
+        print(f"Error fetching active resume: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Database error. Please ensure the 'resumes' table exists. Run: python backend/setup_resume_tables.py"
+        )
 
 
 @router.get("/{resume_id}", response_model=dict)

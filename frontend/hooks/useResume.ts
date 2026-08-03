@@ -61,19 +61,28 @@ export function useActiveResume() {
       });
 
       if (response.status === 404) {
+        // No resume found - this is not an error, just means user hasn't uploaded yet
         setResume(null);
+        setError(null);
         setLoading(false);
         return;
       }
 
       if (!response.ok) {
-        throw new Error("Failed to fetch active resume");
+        // Only throw error for actual errors, not 404
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to fetch active resume");
       }
 
       const data = await response.json();
       setResume(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      // Only set error for network issues or server errors, not for "no resume found"
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError("Cannot connect to server. Please ensure the backend is running.");
+      } else {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      }
     } finally {
       setLoading(false);
     }

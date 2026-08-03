@@ -92,26 +92,32 @@ def get_user_resumes(db: Session, user_id: int) -> List[Dict[str, Any]]:
 
 def get_active_resume(db: Session, user_id: int) -> Optional[Dict[str, Any]]:
     """Get the most recent active resume for a user"""
-    query = text("""
-        SELECT * FROM resumes
-        WHERE user_id = :user_id AND is_active = 1
-        ORDER BY upload_date DESC
-        LIMIT 1
-    """)
-    
-    result = db.execute(query, {"user_id": user_id})
-    row = result.fetchone()
-    
-    if not row:
-        return None
-    
-    resume_dict = dict(row._mapping)
-    if resume_dict.get('parsed_data'):
-        resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
-    if resume_dict.get('skills'):
-        resume_dict['skills'] = json.loads(resume_dict['skills'])
-    
-    return resume_dict
+    try:
+        query = text("""
+            SELECT * FROM resumes
+            WHERE user_id = :user_id AND is_active = 1
+            ORDER BY upload_date DESC
+            LIMIT 1
+        """)
+        
+        result = db.execute(query, {"user_id": user_id})
+        row = result.fetchone()
+        
+        if not row:
+            return None
+        
+        resume_dict = dict(row._mapping)
+        if resume_dict.get('parsed_data'):
+            resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
+        if resume_dict.get('skills'):
+            resume_dict['skills'] = json.loads(resume_dict['skills'])
+        
+        return resume_dict
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Database error in get_active_resume: {str(e)}")
+        # Re-raise to let the router handle it
+        raise
 
 
 def update_resume(
