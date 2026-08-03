@@ -5,9 +5,9 @@ async def get_applications_for_user(conn, user_id: int) -> list[dict]:
     async with conn.cursor(DictCursor) as cur:
         # Check if match_scores and resumes tables exist
         try:
-            await cur.execute("SHOW TABLES LIKE 'match_scores'")
+            await cur.execute("SHOW TABLES LIKE 'resume_match_scores'")
             match_scores_exists = await cur.fetchone()
-            print(f"DEBUG: match_scores table exists: {match_scores_exists}")
+            print(f"DEBUG: resume_match_scores table exists: {match_scores_exists}")
             
             await cur.execute("SHOW TABLES LIKE 'resumes'")
             resumes_exists = await cur.fetchone()
@@ -24,12 +24,14 @@ async def get_applications_for_user(conn, user_id: int) -> list[dict]:
                         ms.skill_match,
                         ms.experience_match
                     FROM job_applications ja
-                    LEFT JOIN (
-                        SELECT ms.* 
-                        FROM match_scores ms
-                        INNER JOIN resumes r ON ms.resume_id = r.id
-                        WHERE r.user_id = %s AND r.is_active = 1
-                    ) ms ON ja.id = ms.application_id
+                    LEFT JOIN resume_match_scores ms ON ja.id = ms.application_id 
+                        AND ms.resume_id = (
+                            SELECT r.id 
+                            FROM resumes r 
+                            WHERE r.user_id = %s AND r.is_active = 1 
+                            ORDER BY r.upload_date DESC 
+                            LIMIT 1
+                        )
                     WHERE ja.user_id = %s
                     ORDER BY ja.created_at DESC
                     """,
@@ -64,7 +66,7 @@ async def get_application_by_id(conn, app_id: int, user_id: int) -> dict | None:
     async with conn.cursor(DictCursor) as cur:
         try:
             # Check if match_scores and resumes tables exist
-            await cur.execute("SHOW TABLES LIKE 'match_scores'")
+            await cur.execute("SHOW TABLES LIKE 'resume_match_scores'")
             match_scores_exists = await cur.fetchone()
             
             await cur.execute("SHOW TABLES LIKE 'resumes'")
@@ -81,7 +83,7 @@ async def get_application_by_id(conn, app_id: int, user_id: int) -> dict | None:
                     FROM job_applications ja
                     LEFT JOIN (
                         SELECT ms.* 
-                        FROM match_scores ms
+                        FROM resume_match_scores ms
                         INNER JOIN resumes r ON ms.resume_id = r.id
                         WHERE r.user_id = %s AND r.is_active = 1
                     ) ms ON ja.id = ms.application_id

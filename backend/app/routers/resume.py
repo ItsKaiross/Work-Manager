@@ -124,7 +124,7 @@ async def debug_resume_status(
         
         # Check match score count
         await cur.execute("""
-            SELECT COUNT(*) FROM match_scores ms
+            SELECT COUNT(*) FROM resume_match_scores ms
             JOIN resumes r ON ms.resume_id = r.id
             WHERE r.user_id = %s
         """, (current_user["id"],))
@@ -133,7 +133,7 @@ async def debug_resume_status(
         # Get sample match scores
         await cur.execute("""
             SELECT ms.application_id, ms.match_percentage, ja.position
-            FROM match_scores ms
+            FROM resume_match_scores ms
             JOIN resumes r ON ms.resume_id = r.id
             JOIN job_applications ja ON ms.application_id = ja.id
             WHERE r.user_id = %s
