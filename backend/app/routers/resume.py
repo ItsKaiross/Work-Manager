@@ -115,7 +115,7 @@ async def get_resumes(
     return resumes
 
 
-@router.get("/active", response_model=dict)
+@router.get("/active")
 async def get_active_resume(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -124,17 +124,28 @@ async def get_active_resume(
     try:
         resume = resume_crud.get_active_resume(db, current_user["id"])
         if not resume:
+            # No resume found - return 404, this is expected when database is empty
             raise HTTPException(status_code=404, detail="No active resume found")
         return resume
     except HTTPException:
-        # Re-raise HTTP exceptions (like 404)
+        # Re-raise HTTP exceptions (like 404) - these are expected
         raise
     except Exception as e:
-        # Log the error and return a more helpful message
-        print(f"Error fetching active resume: {str(e)}")
+        # This is a real error (table doesn't exist, SQL error, etc.)
+        error_msg = str(e).lower()
+        
+        # Check if it's a table doesn't exist error
+        if "doesn't exist" in error_msg or "no such table" in error_msg or "unknown" in error_msg:
+            raise HTTPException(
+                status_code=500,
+                detail="Database table 'resumes' does not exist. Please run the setup script: python backend/setup_resume_tables.py"
+            )
+        
+        # For other database errors
+        print(f"Unexpected error fetching active resume: {str(e)}")
         raise HTTPException(
-            status_code=500, 
-            detail=f"Database error. Please ensure the 'resumes' table exists. Run: python backend/setup_resume_tables.py"
+            status_code=500,
+            detail=f"Database error: {str(e)}"
         )
 
 

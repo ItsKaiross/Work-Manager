@@ -104,18 +104,34 @@ def get_active_resume(db: Session, user_id: int) -> Optional[Dict[str, Any]]:
         row = result.fetchone()
         
         if not row:
+            # No resume found - this is normal, not an error
             return None
         
         resume_dict = dict(row._mapping)
-        if resume_dict.get('parsed_data'):
-            resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
-        if resume_dict.get('skills'):
-            resume_dict['skills'] = json.loads(resume_dict['skills'])
+        
+        # Parse JSON fields if they exist and are not None
+        if resume_dict.get('parsed_data') and resume_dict['parsed_data'] is not None:
+            try:
+                resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
+            except (json.JSONDecodeError, TypeError):
+                resume_dict['parsed_data'] = None
+                
+        if resume_dict.get('skills') and resume_dict['skills'] is not None:
+            try:
+                resume_dict['skills'] = json.loads(resume_dict['skills'])
+            except (json.JSONDecodeError, TypeError):
+                resume_dict['skills'] = []
         
         return resume_dict
     except Exception as e:
-        # Log the error for debugging
-        print(f"Database error in get_active_resume: {str(e)}")
+        # Log the full error details for debugging
+        import traceback
+        print(f"=== Database error in get_active_resume ===")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print(f"User ID: {user_id}")
+        print(traceback.format_exc())
+        print("=" * 50)
         # Re-raise to let the router handle it
         raise
 
