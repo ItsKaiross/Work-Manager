@@ -8,3 +8,4 @@ pip install authlib
 pip install itsdagerous
 pip install mysql
 pip install mysql-connector
+pip install "bcrypt==4.0.1"
