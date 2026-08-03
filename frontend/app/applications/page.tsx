@@ -68,9 +68,11 @@ export default function ApplicationsPage() {
       const result = await recalcResponse.json();
       setRecalculateMessage(`✅ ${result.message} - ${result.applications_processed} applications updated!`);
       
-      // Refresh applications to show new match scores
+      // Refresh applications immediately to show new match scores
+      await refresh();
+      
+      // Clear message after 3 seconds
       setTimeout(() => {
-        refresh();
         setRecalculateMessage(null);
       }, 3000);
     } catch (err) {
