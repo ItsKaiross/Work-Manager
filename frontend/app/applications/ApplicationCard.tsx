@@ -72,6 +72,12 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
     setShowStatusMenu(!showStatusMenu);
   }
 
+  const getMatchColor = (percentage: number) => {
+    if (percentage >= 70) return "bg-green-100 text-green-800 border-green-300";
+    if (percentage >= 50) return "bg-yellow-100 text-yellow-800 border-yellow-300";
+    return "bg-red-100 text-red-800 border-red-300";
+  };
+
   return (
     <Link
       href={`/applications/${app.id}`}
@@ -81,6 +87,13 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
         className={`absolute top-4 right-4 w-3 h-3 rounded-full ${STATUS_COLORS[app.status] || "bg-gray-300"}`}
         title={app.status}
       />
+      
+      {/* Match Percentage Badge */}
+      {app.match_percentage !== null && app.match_percentage !== undefined && (
+        <div className={`absolute top-4 right-10 px-2 py-1 rounded-full text-xs font-semibold border ${getMatchColor(app.match_percentage)}`}>
+          {Math.round(app.match_percentage)}% Match
+        </div>
+      )}
 
       <div className="pr-6">
         <p className="font-semibold text-lg text-gray-900 truncate">

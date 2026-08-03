@@ -171,11 +171,11 @@ async def get_resume(
 @router.get("/{resume_id}/analysis", response_model=ResumeAnalysis)
 async def get_resume_analysis(
     resume_id: int,
-    db: Session = Depends(get_db),
+    conn = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     """Get comprehensive analysis of resume performance"""
-    analysis = resume_crud.get_resume_analysis(db, resume_id, current_user["id"])
+    analysis = await resume_crud.get_resume_analysis(conn, resume_id, current_user["id"])
     if not analysis:
         raise HTTPException(status_code=404, detail="Resume not found")
     return analysis

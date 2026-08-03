@@ -21,4 +21,7 @@ export interface JobApplication {
   applied_date?: string | null;
   created_at: string;
   updated_at?: string | null;
+  match_percentage?: number | null;
+  skill_match?: number | null;
+  experience_match?: number | null;
 }

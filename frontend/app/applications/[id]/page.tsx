@@ -119,11 +119,31 @@ export default function ApplicationDetailPage() {
 
         {app && (
           <>
-            <h1 className="text-2xl font-bold mb-2">{app.position}</h1>
-            <p className="text-gray-500 mb-6">
-              {app.company}
-              {app.location ? ` · ${app.location}` : ""}
-            </p>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">{app.position}</h1>
+                <p className="text-gray-500">
+                  {app.company}
+                  {app.location ? ` · ${app.location}` : ""}
+                </p>
+              </div>
+              
+              {/* Match Percentage Display */}
+              {app.match_percentage !== null && app.match_percentage !== undefined && (
+                <div className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
+                  app.match_percentage >= 70 
+                    ? "bg-green-100 text-green-800 border-green-300"
+                    : app.match_percentage >= 50
+                    ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                    : "bg-red-100 text-red-800 border-red-300"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold">{Math.round(app.match_percentage)}%</span>
+                    <span className="text-xs">Resume Match</span>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Left Column - Job Details */}

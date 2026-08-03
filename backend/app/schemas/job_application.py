@@ -21,6 +21,9 @@ class JobApplicationOut(JobApplicationCreate):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    match_percentage: Optional[float] = None
+    skill_match: Optional[float] = None
+    experience_match: Optional[float] = None
 
     class Config:
         from_attributes = True
