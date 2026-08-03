@@ -117,12 +117,12 @@ async def get_resumes(
 
 @router.get("/active")
 async def get_active_resume(
-    db: Session = Depends(get_db),
+    conn = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     """Get the most recent active resume"""
     try:
-        resume = resume_crud.get_active_resume(db, current_user["id"])
+        resume = await resume_crud.get_active_resume(conn, current_user["id"])
         if not resume:
             # No resume found - return 404, this is expected when database is empty
             raise HTTPException(status_code=404, detail="No active resume found")

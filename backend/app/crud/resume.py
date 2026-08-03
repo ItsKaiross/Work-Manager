@@ -1,11 +1,9 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import text, func
 from typing import List, Optional, Dict, Any
 import json
 
 
-def create_resume(
-    db: Session,
+async def create_resume(
+    conn,
     user_id: int,
     filename: str,
     file_path: str,
@@ -16,98 +14,127 @@ def create_resume(
     education_level: Optional[str] = None
 ) -> Dict[str, Any]:
     """Create a new resume record"""
-    query = text("""
+    query = """
         INSERT INTO resumes (
             user_id, filename, file_path, file_size, parsed_data,
             skills, experience_years, education_level
         )
-        VALUES (
-            :user_id, :filename, :file_path, :file_size, :parsed_data,
-            :skills, :experience_years, :education_level
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    
+    async with conn.cursor() as cursor:
+        await cursor.execute(
+            query,
+            (
+                user_id,
+                filename,
+                file_path,
+                file_size,
+                json.dumps(parsed_data) if parsed_data else None,
+                json.dumps(skills) if skills else None,
+                experience_years,
+                education_level
+            )
         )
-    """)
+        await conn.commit()
+        resume_id = cursor.lastrowid
     
-    result = db.execute(
-        query,
-        {
-            "user_id": user_id,
-            "filename": filename,
-            "file_path": file_path,
-            "file_size": file_size,
-            "parsed_data": json.dumps(parsed_data) if parsed_data else None,
-            "skills": json.dumps(skills) if skills else None,
-            "experience_years": experience_years,
-            "education_level": education_level
-        }
-    )
-    db.commit()
-    
-    resume_id = result.lastrowid
-    return get_resume_by_id(db, resume_id, user_id)
+    return await get_resume_by_id(conn, resume_id, user_id)
 
 
-def get_resume_by_id(db: Session, resume_id: int, user_id: int) -> Optional[Dict[str, Any]]:
+async def get_resume_by_id(conn, resume_id: int, user_id: int) -> Optional[Dict[str, Any]]:
     """Get a resume by ID"""
-    query = text("""
+    query = """
         SELECT * FROM resumes
-        WHERE id = :resume_id AND user_id = :user_id AND is_active = 1
-    """)
+        WHERE id = %s AND user_id = %s AND is_active = 1
+    """
     
-    result = db.execute(query, {"resume_id": resume_id, "user_id": user_id})
-    row = result.fetchone()
+    async with conn.cursor() as cursor:
+        await cursor.execute(query, (resume_id, user_id))
+        row = await cursor.fetchone()
+        
+        if not row:
+            return None
+        
+        # Get column names
+        await cursor.execute("DESCRIBE resumes")
+        columns = await cursor.fetchall()
+        column_names = [col[0] for col in columns]
     
-    if not row:
-        return None
-    
-    resume_dict = dict(row._mapping)
+    resume_dict = dict(zip(column_names, row))
     if resume_dict.get('parsed_data'):
-        resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
+        try:
+            resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
+        except:
+            resume_dict['parsed_data'] = None
     if resume_dict.get('skills'):
-        resume_dict['skills'] = json.loads(resume_dict['skills'])
+        try:
+            resume_dict['skills'] = json.loads(resume_dict['skills'])
+        except:
+            resume_dict['skills'] = []
     
     return resume_dict
 
 
-def get_user_resumes(db: Session, user_id: int) -> List[Dict[str, Any]]:
+async def get_user_resumes(conn, user_id: int) -> List[Dict[str, Any]]:
     """Get all resumes for a user"""
-    query = text("""
+    query = """
         SELECT * FROM resumes
-        WHERE user_id = :user_id AND is_active = 1
+        WHERE user_id = %s AND is_active = 1
         ORDER BY upload_date DESC
-    """)
+    """
     
-    result = db.execute(query, {"user_id": user_id})
+    async with conn.cursor() as cursor:
+        await cursor.execute(query, (user_id,))
+        rows = await cursor.fetchall()
+        
+        # Get column names
+        await cursor.execute("DESCRIBE resumes")
+        columns = await cursor.fetchall()
+        column_names = [col[0] for col in columns]
+    
     resumes = []
-    
-    for row in result:
-        resume_dict = dict(row._mapping)
+    for row in rows:
+        resume_dict = dict(zip(column_names, row))
         if resume_dict.get('parsed_data'):
-            resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
+            try:
+                resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
+            except:
+                resume_dict['parsed_data'] = None
         if resume_dict.get('skills'):
-            resume_dict['skills'] = json.loads(resume_dict['skills'])
+            try:
+                resume_dict['skills'] = json.loads(resume_dict['skills'])
+            except:
+                resume_dict['skills'] = []
         resumes.append(resume_dict)
     
     return resumes
 
 
-def get_active_resume(db: Session, user_id: int) -> Optional[Dict[str, Any]]:
+async def get_active_resume(conn, user_id: int) -> Optional[Dict[str, Any]]:
     """Get the most recent active resume for a user"""
     try:
-        query = text("""
+        query = """
             SELECT * FROM resumes
-            WHERE user_id = :user_id AND is_active = 1
+            WHERE user_id = %s AND is_active = 1
             ORDER BY upload_date DESC
             LIMIT 1
-        """)
+        """
         
-        result = db.execute(query, {"user_id": user_id})
-        row = result.fetchone()
+        async with conn.cursor() as cursor:
+            await cursor.execute(query, (user_id,))
+            row = await cursor.fetchone()
+            
+            if not row:
+                # No resume found - this is normal, not an error
+                return None
+            
+            # Get column names
+            await cursor.execute("DESCRIBE resumes")
+            columns = await cursor.fetchall()
+            column_names = [col[0] for col in columns]
         
-        if not row:
-            # No resume found - this is normal, not an error
-            return None
-        
-        resume_dict = dict(row._mapping)
+        resume_dict = dict(zip(column_names, row))
         
         # Parse JSON fields if they exist and are not None
         if resume_dict.get('parsed_data') and resume_dict['parsed_data'] is not None:
@@ -136,8 +163,8 @@ def get_active_resume(db: Session, user_id: int) -> Optional[Dict[str, Any]]:
         raise
 
 
-def update_resume(
-    db: Session,
+async def update_resume(
+    conn,
     resume_id: int,
     user_id: int,
     **kwargs
@@ -145,42 +172,44 @@ def update_resume(
     """Update a resume"""
     allowed_fields = ['filename', 'parsed_data', 'skills', 'experience_years', 'education_level', 'is_active']
     updates = []
-    params = {"resume_id": resume_id, "user_id": user_id}
+    values = []
     
     for field, value in kwargs.items():
         if field in allowed_fields and value is not None:
             if field in ['parsed_data', 'skills']:
                 value = json.dumps(value)
-            updates.append(f"{field} = :{field}")
-            params[field] = value
+            updates.append(f"{field} = %s")
+            values.append(value)
     
     if not updates:
-        return get_resume_by_id(db, resume_id, user_id)
+        return await get_resume_by_id(conn, resume_id, user_id)
     
-    query = text(f"""
+    values.extend([resume_id, user_id])
+    query = f"""
         UPDATE resumes
         SET {', '.join(updates)}
-        WHERE id = :resume_id AND user_id = :user_id
-    """)
+        WHERE id = %s AND user_id = %s
+    """
     
-    db.execute(query, params)
-    db.commit()
+    async with conn.cursor() as cursor:
+        await cursor.execute(query, tuple(values))
+        await conn.commit()
     
-    return get_resume_by_id(db, resume_id, user_id)
+    return await get_resume_by_id(conn, resume_id, user_id)
 
 
-def delete_resume(db: Session, resume_id: int, user_id: int) -> bool:
+async def delete_resume(conn, resume_id: int, user_id: int) -> bool:
     """Soft delete a resume"""
-    query = text("""
+    query = """
         UPDATE resumes
         SET is_active = 0
-        WHERE id = :resume_id AND user_id = :user_id
-    """)
+        WHERE id = %s AND user_id = %s
+    """
     
-    result = db.execute(query, {"resume_id": resume_id, "user_id": user_id})
-    db.commit()
-    
-    return result.rowcount > 0
+    async with conn.cursor() as cursor:
+        await cursor.execute(query, (resume_id, user_id))
+        await conn.commit()
+        return cursor.rowcount > 0
 
 
 def calculate_match_score(
@@ -219,8 +248,8 @@ def calculate_match_score(
     }
 
 
-def save_match_score(
-    db: Session,
+async def save_match_score(
+    conn,
     resume_id: int,
     application_id: int,
     match_percentage: float,
@@ -228,46 +257,41 @@ def save_match_score(
     experience_match: float
 ) -> int:
     """Save match score to database"""
-    query = text("""
+    query = """
         INSERT INTO resume_match_scores (
             resume_id, application_id, match_percentage,
             skill_match, experience_match
         )
-        VALUES (
-            :resume_id, :application_id, :match_percentage,
-            :skill_match, :experience_match
-        )
+        VALUES (%s, %s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
-            match_percentage = :match_percentage,
-            skill_match = :skill_match,
-            experience_match = :experience_match,
+            match_percentage = %s,
+            skill_match = %s,
+            experience_match = %s,
             calculated_at = CURRENT_TIMESTAMP
-    """)
+    """
     
-    result = db.execute(
-        query,
-        {
-            "resume_id": resume_id,
-            "application_id": application_id,
-            "match_percentage": match_percentage,
-            "skill_match": skill_match,
-            "experience_match": experience_match
-        }
-    )
-    db.commit()
-    
-    return result.lastrowid
+    async with conn.cursor() as cursor:
+        await cursor.execute(
+            query,
+            (
+                resume_id, application_id, match_percentage,
+                skill_match, experience_match,
+                match_percentage, skill_match, experience_match
+            )
+        )
+        await conn.commit()
+        return cursor.lastrowid
 
 
-def get_resume_analysis(db: Session, resume_id: int, user_id: int) -> Dict[str, Any]:
+async def get_resume_analysis(conn, resume_id: int, user_id: int) -> Dict[str, Any]:
     """Get comprehensive analysis of resume performance"""
     # Verify resume belongs to user
-    resume = get_resume_by_id(db, resume_id, user_id)
+    resume = await get_resume_by_id(conn, resume_id, user_id)
     if not resume:
         return None
     
     # Get all match scores for this resume
-    query = text("""
+    query = """
         SELECT 
             COUNT(DISTINCT rms.application_id) as total_applications,
             AVG(rms.match_percentage) as avg_match_percentage,
@@ -276,13 +300,14 @@ def get_resume_analysis(db: Session, resume_id: int, user_id: int) -> Dict[str, 
             SUM(CASE WHEN ja.status IN ('offer', 'interviewing') THEN 1 ELSE 0 END) as successful_applications
         FROM resume_match_scores rms
         LEFT JOIN job_applications ja ON rms.application_id = ja.id
-        WHERE rms.resume_id = :resume_id AND ja.user_id = :user_id
-    """)
+        WHERE rms.resume_id = %s AND ja.user_id = %s
+    """
     
-    result = db.execute(query, {"resume_id": resume_id, "user_id": user_id})
-    stats = result.fetchone()
+    async with conn.cursor() as cursor:
+        await cursor.execute(query, (resume_id, user_id))
+        stats = await cursor.fetchone()
     
-    if not stats or stats.total_applications == 0:
+    if not stats or stats[0] == 0:
         return {
             "resume_id": resume_id,
             "total_applications": 0,
@@ -297,19 +322,20 @@ def get_resume_analysis(db: Session, resume_id: int, user_id: int) -> Dict[str, 
             ]
         }
     
-    total = stats.total_applications or 0
-    successful = stats.successful_applications or 0
+    total = stats[0] or 0
+    avg_match = stats[1] or 0
+    successful = stats[4] or 0
     success_rate = (successful / total * 100) if total > 0 else 0
     
     return {
         "resume_id": resume_id,
         "total_applications": total,
         "matched_applications": total,
-        "average_match_percentage": round(stats.avg_match_percentage or 0, 2),
+        "average_match_percentage": round(avg_match, 2),
         "success_rate": round(success_rate, 2),
         "top_matching_skills": resume.get('skills', [])[:5],
         "recommendations": generate_recommendations(
-            stats.avg_match_percentage or 0,
+            avg_match,
             success_rate,
             resume.get('skills', [])
         )
