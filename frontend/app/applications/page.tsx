@@ -16,6 +16,8 @@ export default function ApplicationsPage() {
   const [checked, setChecked] = useState(false);
   const { applications, loading, error, refresh, lastUpdated } = useApplications(30000); // Auto-refresh every 30 seconds
   const [activeFilter, setActiveFilter] = useState<Status>("all");
+  const [recalculating, setRecalculating] = useState(false);
+  const [recalculateMessage, setRecalculateMessage] = useState<string | null>(null);
   
   useSessionMonitor();
 
@@ -27,6 +29,56 @@ export default function ApplicationsPage() {
       setChecked(true);
     }
   }, [router]);
+
+  const handleRecalculate = async () => {
+    setRecalculating(true);
+    setRecalculateMessage(null);
+    
+    try {
+      const token = getAuthToken();
+      const response = await fetch("http://localhost:8000/api/resumes/active", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 404) {
+        setRecalculateMessage("❌ No resume found. Please upload a resume first!");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to get active resume");
+      }
+
+      const resume = await response.json();
+      
+      // Call recalculate endpoint
+      const recalcResponse = await fetch(`http://localhost:8000/api/resumes/${resume.id}/recalculate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!recalcResponse.ok) {
+        throw new Error("Failed to recalculate match scores");
+      }
+
+      const result = await recalcResponse.json();
+      setRecalculateMessage(`✅ ${result.message} - ${result.applications_processed} applications updated!`);
+      
+      // Refresh applications to show new match scores
+      setTimeout(() => {
+        refresh();
+        setRecalculateMessage(null);
+      }, 3000);
+    } catch (err) {
+      setRecalculateMessage(`❌ Error: ${err instanceof Error ? err.message : "Failed to recalculate"}`);
+    } finally {
+      setRecalculating(false);
+    }
+  };
 
   if (!checked) return null;
 
@@ -52,6 +104,17 @@ export default function ApplicationsPage() {
               Last updated: {lastUpdated.toLocaleTimeString()}
             </span>
             <button
+              onClick={handleRecalculate}
+              disabled={recalculating}
+              className="px-3 py-1.5 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              title="Recalculate match scores for all applications"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              {recalculating ? "Calculating..." : "Recalculate Matches"}
+            </button>
+            <button
               onClick={refresh}
               disabled={loading}
               className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
@@ -63,6 +126,12 @@ export default function ApplicationsPage() {
             </button>
           </div>
         </div>
+
+        {recalculateMessage && (
+          <div className={`mb-4 p-3 rounded-lg ${recalculateMessage.includes('✅') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {recalculateMessage}
+          </div>
+        )}
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 

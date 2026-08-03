@@ -7,12 +7,15 @@ async def get_applications_for_user(conn, user_id: int) -> list[dict]:
         try:
             await cur.execute("SHOW TABLES LIKE 'match_scores'")
             match_scores_exists = await cur.fetchone()
+            print(f"DEBUG: match_scores table exists: {match_scores_exists}")
             
             await cur.execute("SHOW TABLES LIKE 'resumes'")
             resumes_exists = await cur.fetchone()
+            print(f"DEBUG: resumes table exists: {resumes_exists}")
             
             # If tables exist, get applications with match scores
             if match_scores_exists and resumes_exists:
+                print(f"DEBUG: Fetching applications with match scores for user {user_id}")
                 await cur.execute(
                     """
                     SELECT 
@@ -32,17 +35,24 @@ async def get_applications_for_user(conn, user_id: int) -> list[dict]:
                     """,
                     (user_id, user_id),
                 )
+                results = await cur.fetchall()
+                print(f"DEBUG: Fetched {len(results)} applications")
+                if results:
+                    print(f"DEBUG: First app match_percentage: {results[0].get('match_percentage')}")
+                return results
             else:
                 # Fallback: just get applications without match scores
+                print(f"DEBUG: Tables don't exist, using fallback query")
                 await cur.execute(
                     "SELECT * FROM job_applications WHERE user_id = %s ORDER BY created_at DESC",
                     (user_id,),
                 )
-            
-            return await cur.fetchall()
+                return await cur.fetchall()
         except Exception as e:
             # If any error, fallback to basic query
-            print(f"Error fetching applications with match scores: {e}")
+            print(f"ERROR fetching applications with match scores: {e}")
+            import traceback
+            traceback.print_exc()
             await cur.execute(
                 "SELECT * FROM job_applications WHERE user_id = %s ORDER BY created_at DESC",
                 (user_id,),

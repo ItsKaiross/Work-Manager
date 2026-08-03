@@ -290,19 +290,19 @@ async def delete_resume(
 @router.post("/{resume_id}/recalculate")
 async def recalculate_match_scores(
     resume_id: int,
-    db: Session = Depends(get_db),
+    conn = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     """Recalculate match scores for all applications"""
-    resume = resume_crud.get_resume_by_id(db, resume_id, current_user["id"])
+    resume = await resume_crud.get_resume_by_id(conn, resume_id, current_user["id"])
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
     
-    applications = job_crud.get_user_applications(db, current_user["id"])
+    applications = await job_crud.get_applications_for_user(conn, current_user["id"])
     matched_count = 0
     
-    for app in applications:
-        if resume.get('skills'):
+    if resume.get('skills') and len(resume['skills']) > 0:
+        for app in applications:
             match_scores = resume_crud.calculate_match_score(
                 resume_skills=resume['skills'],
                 job_description=app.get('description', '') or '',
@@ -310,8 +310,8 @@ async def recalculate_match_scores(
                 required_experience=None
             )
             
-            resume_crud.save_match_score(
-                db=db,
+            await resume_crud.save_match_score(
+                conn=conn,
                 resume_id=resume['id'],
                 application_id=app['id'],
                 match_percentage=match_scores['match_percentage'],
