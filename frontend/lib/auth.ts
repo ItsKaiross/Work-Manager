@@ -2,12 +2,19 @@
 
 const TOKEN_KEY = "access_token";
 const TOKEN_EXPIRY_KEY = "token_expiry";
+const LAST_ACTIVITY_KEY = "last_activity";
 const TOKEN_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes of inactivity
 
 export function setAuthToken(token: string) {
   const expiryTime = Date.now() + TOKEN_DURATION;
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
+  updateLastActivity();
+}
+
+export function updateLastActivity() {
+  localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
 }
 
 export function getAuthToken(): string | null {
@@ -30,6 +37,7 @@ export function getAuthToken(): string | null {
 export function clearAuthToken() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(TOKEN_EXPIRY_KEY);
+  localStorage.removeItem(LAST_ACTIVITY_KEY);
 }
 
 export function isTokenExpired(): boolean {
@@ -40,4 +48,15 @@ export function isTokenExpired(): boolean {
   }
 
   return Date.now() > parseInt(expiryTime);
+}
+
+export function isSessionInactive(): boolean {
+  const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
+  
+  if (!lastActivity) {
+    return true;
+  }
+
+  const timeSinceLastActivity = Date.now() - parseInt(lastActivity);
+  return timeSinceLastActivity > INACTIVITY_TIMEOUT;
 }
