@@ -134,6 +134,36 @@ async def create_application(conn, data: dict, user_id: int) -> dict:
         await conn.commit()
         app_id = cur.lastrowid
 
+    # Automatically calculate match score for new application if user has an active resume
+    try:
+        from app.crud import resume as resume_crud
+        
+        # Get active resume
+        resume = await resume_crud.get_active_resume(conn, user_id)
+        
+        if resume and resume.get('skills'):
+            # Calculate match score
+            match_scores = resume_crud.calculate_match_score(
+                resume_skills=resume['skills'],
+                job_description=data.get('description', '') or '',
+                resume_experience=resume.get('experience_years', 0),
+                required_experience=None
+            )
+            
+            # Save match score
+            await resume_crud.save_match_score(
+                conn=conn,
+                resume_id=resume['id'],
+                application_id=app_id,
+                match_percentage=match_scores['match_percentage'],
+                skill_match=match_scores['skill_match'],
+                experience_match=match_scores['experience_match']
+            )
+            print(f"✅ Auto-calculated match score for new application {app_id}: {match_scores['match_percentage']}%")
+    except Exception as e:
+        # Don't fail the application creation if match score calculation fails
+        print(f"⚠️ Could not auto-calculate match score for application {app_id}: {e}")
+
     return await get_application_by_id(conn, app_id, user_id)
 
 async def update_application(conn, app_id: int, data: dict, user_id: int) -> dict | None:
