@@ -296,9 +296,29 @@ def _extract_linkedin(soup: BeautifulSoup, title: str | None) -> dict:
                     location = loc_text
                     break
     
-    # Get description
-    meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", property="og:description")
-    description = meta_desc["content"].strip() if meta_desc and meta_desc.get("content") else None
+    # Get full description from page content (more complete than meta description)
+    description = None
+    
+    # Try to find description in various LinkedIn elements
+    desc_selectors = [
+        soup.find('div', class_=lambda x: x and 'description' in x.lower()),
+        soup.find('section', class_=lambda x: x and 'description' in x.lower()),
+        soup.find('article'),
+    ]
+    
+    for elem in desc_selectors:
+        if elem:
+            # Get text and clean it up
+            text = elem.get_text(separator='\n', strip=True)
+            # Filter out very short descriptions (likely navigation elements)
+            if text and len(text) > 100:
+                description = text
+                break
+    
+    # Fallback to meta description if full description not found
+    if not description:
+        meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", property="og:description")
+        description = meta_desc["content"].strip() if meta_desc and meta_desc.get("content") else None
     
     return {
         "position": position,
