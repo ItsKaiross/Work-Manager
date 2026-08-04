@@ -209,10 +209,103 @@ def _extract_onlinejobs_ph(soup: BeautifulSoup) -> dict:
         "description": description,
     }
 
+def _extract_linkedin(soup: BeautifulSoup, title: str | None) -> dict:
+    """Site-specific extraction for LinkedIn job postings."""
+    position = None
+    company = None
+    location = None
+    
+    # LinkedIn title formats:
+    # "Company hiring Position in Location | LinkedIn"
+    # "Job Title - Company Name | LinkedIn"
+    # "Job Title at Company Name | LinkedIn"
+    if title:
+        # First, remove " | LinkedIn" or " - LinkedIn" suffixes
+        clean_title = re.sub(r'\s*[\|\-]\s*LinkedIn.*$', '', title, flags=re.IGNORECASE).strip()
+        
+        # Pattern 1: "Company hiring Position in Location"
+        hiring_match = re.match(r'^(.+?)\s+hiring\s+(.+?)(?:\s+in\s+(.+))?$', clean_title, re.IGNORECASE)
+        if hiring_match:
+            company = hiring_match.group(1).strip()
+            position = hiring_match.group(2).strip()
+            if hiring_match.group(3):
+                location = hiring_match.group(3).strip()
+        else:
+            # Pattern 2: "Job Title at Company Name"
+            at_match = re.match(r'^(.+?)\s+at\s+(.+?)$', clean_title, re.IGNORECASE)
+            if at_match:
+                position = at_match.group(1).strip()
+                company = at_match.group(2).strip()
+            # Pattern 3: "Job Title - Company Name"
+            elif ' - ' in clean_title:
+                parts = clean_title.split(' - ', 1)
+                position = parts[0].strip()
+                if len(parts) > 1:
+                    company = parts[1].strip()
+            else:
+                # No clear separator, use the H1 for position if available
+                position = clean_title
+    
+    # Try to get position from H1 if not found or seems incomplete
+    if not position or len(position) > 100:  # Title might be too long/corrupted
+        h1 = soup.find('h1')
+        if h1:
+            position = h1.get_text(strip=True)
+    
+    # Try to find company from HTML elements if not extracted from title
+    if not company:
+        # Look for company name in various LinkedIn elements
+        company_selectors = [
+            soup.find("a", class_=re.compile(r".*company.*name.*", re.I)),
+            soup.find("span", class_=re.compile(r".*company.*name.*", re.I)),
+            soup.find("div", class_=re.compile(r".*company.*name.*", re.I)),
+            soup.find("h4", class_=re.compile(r".*company.*", re.I)),
+        ]
+        
+        for elem in company_selectors:
+            if elem:
+                company_text = elem.get_text(strip=True)
+                # Sanity check: reasonable company name length
+                if company_text and 2 < len(company_text) < 100:
+                    company = company_text
+                    break
+    
+    # Try to find location from page content if not extracted from title
+    if not location:
+        location_patterns = [
+            soup.find("span", class_=re.compile(r".*location.*", re.I)),
+            soup.find("div", class_=re.compile(r".*location.*", re.I)),
+        ]
+        for elem in location_patterns:
+            if elem:
+                loc_text = elem.get_text(strip=True)
+                if loc_text and len(loc_text) < 100:  # Sanity check
+                    location = loc_text
+                    break
+    
+    # Get description
+    meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", property="og:description")
+    description = meta_desc["content"].strip() if meta_desc and meta_desc.get("content") else None
+    
+    return {
+        "position": position,
+        "company": company,
+        "location": location,
+        "salary_range": None,
+        "description": description,
+    }
+
 def fallback_extract(html: str, url: str = "") -> dict:
     soup = BeautifulSoup(html, "lxml")
+    parsed_url = urlparse(url)
+    domain = parsed_url.netloc.lower()
 
-    if "onlinejobs.ph" in urlparse(url).netloc:
+    # Get title first as it's used by multiple extractors
+    title_tag = soup.find("title")
+    title = title_tag.text.strip() if title_tag else None
+
+    # Site-specific extraction for OnlineJobs.ph
+    if "onlinejobs.ph" in domain:
         result = _extract_onlinejobs_ph(soup)
         if result.get("position"):
             # Try to extract company from description if not found
@@ -220,9 +313,16 @@ def fallback_extract(html: str, url: str = "") -> dict:
                 result["company"] = _extract_company_from_description(result["description"])
             return result
 
-    title_tag = soup.find("title")
-    title = title_tag.text.strip() if title_tag else None
+    # Site-specific extraction for LinkedIn
+    if "linkedin.com" in domain:
+        result = _extract_linkedin(soup, title)
+        if result.get("position"):
+            # Try to extract company from description if still not found
+            if not result.get("company") and result.get("description"):
+                result["company"] = _extract_company_from_description(result["description"])
+            return result
 
+    # Generic fallback for other sites
     og_site = soup.find("meta", property="og:site_name")
     meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find("meta", property="og:description")
     description = meta_desc["content"].strip() if meta_desc and meta_desc.get("content") else None
