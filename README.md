@@ -311,7 +311,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 For issues, questions, or suggestions:
 - Create an issue on GitHub
-- Contact: [Your contact information]
+- Contact: markjunellex@gmail.com
 
 ## Acknowledgments 🙏
 
