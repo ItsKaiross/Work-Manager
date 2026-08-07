@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import ApplicationCard from "@/app/applications/ApplicationCard";
 import StatusFilter from "@/app/applications/StatusFilter";
+import CategoryFilter from "@/app/applications/CategoryFilter";
 import { useApplications } from "@/hooks/useApplication";
 import { JobApplication } from "@/types/job_application";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
+import { getJobCategory } from "@/lib/jobCategories";
 
 type Status = JobApplication["status"] | "all";
 
@@ -16,6 +18,7 @@ export default function ApplicationsPage() {
   const [checked, setChecked] = useState(false);
   const { applications, loading, error, refresh, lastUpdated } = useApplications(30000); // Auto-refresh every 30 seconds
   const [activeFilter, setActiveFilter] = useState<Status>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -89,6 +92,7 @@ export default function ApplicationsPage() {
 
   const filtered = applications.filter((a) => {
     if (activeFilter !== "all" && a.status !== activeFilter) return false;
+    if (activeCategory !== "all" && getJobCategory(a) !== activeCategory) return false;
 
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
@@ -104,12 +108,14 @@ export default function ApplicationsPage() {
     return true;
   });
 
-  const hasActiveFilters = searchQuery.trim() !== "" || dateFrom !== "" || dateTo !== "";
+  const hasActiveFilters =
+    searchQuery.trim() !== "" || dateFrom !== "" || dateTo !== "" || activeCategory !== "all";
 
   const clearFilters = () => {
     setSearchQuery("");
     setDateFrom("");
     setDateTo("");
+    setActiveCategory("all");
   };
 
   return (
@@ -209,6 +215,12 @@ export default function ApplicationsPage() {
               applications={applications}
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
+            />
+
+            <CategoryFilter
+              applications={applications}
+              activeCategory={activeCategory}
+              onCategoryChange={setActiveCategory}
             />
 
             {filtered.length === 0 ? (
