@@ -9,6 +9,9 @@ A comprehensive job application tracking system with AI-powered resume matching 
 - Status tracking: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn
 - Store job details: company, position, location, salary, job description, notes
 - Filter applications by status
+- Search applications by company, position, or location
+- Filter applications by applied date range (From/To)
+- Filter applications by work category, auto-detected from keywords in the position/description (e.g. Video Editor, Full Stack, Frontend, Backend, Mobile, Data, DevOps, Design, Product, QA)
 - Auto-refresh every 30 seconds
 - Multi-currency support (USD, EUR, GBP, JPY, CNY, INR, AUD, CAD, SGD, PHP, MYR, THB, VND, IDR)
 
@@ -81,14 +84,16 @@ Work Manager/
 │   │   ├── applications/   # Job application pages
 │   │   │   ├── [id]/      # Application detail page
 │   │   │   ├── new/       # New application form
-│   │   │   └── page.tsx   # Applications list
+│   │   │   ├── StatusFilter.tsx    # Filter by application status
+│   │   │   ├── CategoryFilter.tsx  # Filter by keyword-detected work category
+│   │   │   └── page.tsx   # Applications list (search + date range + filters)
 │   │   ├── resume/        # Resume management page
 │   │   ├── components/
 │   │   │   └── layout/
 │   │   │       └── Sidebar.tsx
 │   │   └── page.tsx       # Login page
 │   ├── hooks/             # Custom React hooks
-│   ├── lib/               # Utilities
+│   ├── lib/               # Utilities (incl. jobCategories.ts for category keyword matching)
 │   ├── types/             # TypeScript types
 │   └── public/
 │
@@ -203,6 +208,9 @@ Work Manager/
 1. **View all applications**
    - Dashboard shows all applications with match percentages
    - Filter by status (Saved, Applied, Interviewing, etc.)
+   - Filter by work category (auto-detected from job title/description keywords)
+   - Search by company, position, or location
+   - Narrow results to an applied-date range
    - Color-coded badges show match quality
 
 2. **Update application status**
