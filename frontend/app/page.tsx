@@ -40,7 +40,7 @@ export default function Home() {
       <main>
         {/* Login Box */}
         <div className="flex flex-col w-110 rounded-lg bg-gray-100 shadow-lg p-15">
-          <h1 className="text-black self-center text-3xl font-bold">Log in</h1>
+          <h1 className="text-black self-center text-3xl font-bold">Sign in to Work Manager</h1>
           {error && (
             <p className="mt-4 text-sm text-red-500 text-center">{error}</p>
           )}

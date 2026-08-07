@@ -16,6 +16,9 @@ export default function ApplicationsPage() {
   const [checked, setChecked] = useState(false);
   const { applications, loading, error, refresh, lastUpdated } = useApplications(30000); // Auto-refresh every 30 seconds
   const [activeFilter, setActiveFilter] = useState<Status>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [recalculating, setRecalculating] = useState(false);
   const [recalculateMessage, setRecalculateMessage] = useState<string | null>(null);
   
@@ -84,15 +87,30 @@ export default function ApplicationsPage() {
 
   if (!checked) return null;
 
-  const filtered = activeFilter === "all"
-    ? applications
-    : applications.filter((a) => a.status === activeFilter);
+  const filtered = applications.filter((a) => {
+    if (activeFilter !== "all" && a.status !== activeFilter) return false;
 
-  // Debug: log first application to see if match_percentage exists
-  if (applications.length > 0) {
-    console.log("First application data:", applications[0]);
-    console.log("Has match_percentage?", applications[0].match_percentage);
-  }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const haystack = `${a.company} ${a.position} ${a.location ?? ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+
+    const referenceDate = a.applied_date ?? a.created_at;
+    if (dateFrom && referenceDate && referenceDate.slice(0, 10) < dateFrom) return false;
+    if (dateTo && referenceDate && referenceDate.slice(0, 10) > dateTo) return false;
+    if ((dateFrom || dateTo) && !referenceDate) return false;
+
+    return true;
+  });
+
+  const hasActiveFilters = searchQuery.trim() !== "" || dateFrom !== "" || dateTo !== "";
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setDateFrom("");
+    setDateTo("");
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -139,6 +157,54 @@ export default function ApplicationsPage() {
 
         {!loading && !error && (
           <>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+              <div className="relative flex-1 sm:max-w-xs">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search company, position, location..."
+                  className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500" htmlFor="dateFrom">From</label>
+                <input
+                  id="dateFrom"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-500" htmlFor="dateTo">To</label>
+                <input
+                  id="dateTo"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-500 hover:text-blue-600 transition"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+
             <StatusFilter
               applications={applications}
               activeFilter={activeFilter}
