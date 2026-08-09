@@ -15,6 +15,14 @@ A comprehensive job application tracking system with AI-powered resume matching 
 - Auto-refresh every 30 seconds
 - Multi-currency support (USD, EUR, GBP, JPY, CNY, INR, AUD, CAD, SGD, PHP, MYR, THB, VND, IDR)
 
+### ⏰ Follow-up Reminders
+- Automatic staleness detection — no manual dates to maintain
+- Applications are flagged when they've sat too long in their current status:
+  - Saved: 5 days · Applied: 7 days · Interviewing: 3 days · Offer: 2 days
+  - Rejected/Withdrawn are never flagged (terminal states)
+- Dashboard "Needs Follow-up" section surfaces flagged applications, sorted by longest overdue
+- Flagged cards show a highlighted border and days-since-update hint throughout the app
+
 ### 📄 Resume Management
 - Upload resumes (PDF, DOC, DOCX, TXT)
 - Automatic parsing of skills, experience, and education
@@ -228,6 +236,10 @@ Work Manager/
    - Click "Recalculate Matches" to update all scores
    - Applications refresh automatically
 
+5. **Check follow-up reminders**
+   - Dashboard highlights applications with no status update in a while
+   - Open the flagged application and follow up, or update its status to clear the flag
+
 ## API Endpoints 🔌
 
 ### Authentication
@@ -235,7 +247,7 @@ Work Manager/
 - `POST /token` - Login and get JWT token
 
 ### Applications
-- `GET /applications` - List all applications
+- `GET /applications` - List all applications (includes `needs_follow_up` / `days_since_update`)
 - `POST /applications` - Create new application (auto-calculates match score)
 - `GET /applications/{id}` - Get application details
 - `PUT /applications/{id}` - Update application
