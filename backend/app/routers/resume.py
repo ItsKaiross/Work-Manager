@@ -111,45 +111,6 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=f"Failed to create resume: {str(e)}")
 
 
-@router.get("/debug/status")
-async def debug_resume_status(
-    conn = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Debug endpoint to check resume and match score status"""
-    async with conn.cursor() as cur:
-        # Check resume count
-        await cur.execute("SELECT COUNT(*) FROM resumes WHERE user_id = %s", (current_user["id"],))
-        (resume_count,) = await cur.fetchone()
-        
-        # Check match score count
-        await cur.execute("""
-            SELECT COUNT(*) FROM resume_match_scores ms
-            JOIN resumes r ON ms.resume_id = r.id
-            WHERE r.user_id = %s
-        """, (current_user["id"],))
-        (match_count,) = await cur.fetchone()
-        
-        # Get sample match scores
-        await cur.execute("""
-            SELECT ms.application_id, ms.match_percentage, ja.position
-            FROM resume_match_scores ms
-            JOIN resumes r ON ms.resume_id = r.id
-            JOIN job_applications ja ON ms.application_id = ja.id
-            WHERE r.user_id = %s
-            LIMIT 3
-        """, (current_user["id"],))
-        samples = await cur.fetchall()
-        
-        return {
-            "resume_count": resume_count,
-            "match_score_count": match_count,
-            "sample_matches": [
-                {"app_id": s[0], "percentage": s[1], "position": s[2]}
-                for s in samples
-            ]
-        }
-
 @router.get("/", response_model=List[dict])
 async def get_resumes(
     conn = Depends(get_db),

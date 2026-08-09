@@ -81,7 +81,9 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
   return (
     <Link
       href={`/applications/${app.id}`}
-      className="relative block bg-white hover:bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 transition-colors shadow-sm"
+      className={`relative block bg-white hover:bg-gray-50 border rounded-xl px-5 py-4 transition-colors shadow-sm ${
+        app.needs_follow_up ? "border-orange-300 border-l-4 border-l-orange-400" : "border-gray-200"
+      }`}
     >
       {/* Status Dot */}
       <span
@@ -156,6 +158,12 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
         </div>
         <span className="text-xs text-gray-400">{appliedDate}</span>
       </div>
+
+      {app.needs_follow_up && (
+        <p className="text-xs text-orange-600 font-medium mt-1">
+          ⏰ No update in {app.days_since_update} day{app.days_since_update === 1 ? "" : "s"} — follow up?
+        </p>
+      )}
     </Link>
   );
 }

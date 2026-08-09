@@ -24,4 +24,6 @@ export interface JobApplication {
   match_percentage?: number | null;
   skill_match?: number | null;
   experience_match?: number | null;
+  needs_follow_up?: boolean | null;
+  days_since_update?: number | null;
 }

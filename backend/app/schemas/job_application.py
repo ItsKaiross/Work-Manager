@@ -24,6 +24,8 @@ class JobApplicationOut(JobApplicationCreate):
     match_percentage: Optional[float] = None
     skill_match: Optional[float] = None
     experience_match: Optional[float] = None
+    needs_follow_up: Optional[bool] = None
+    days_since_update: Optional[int] = None
 
     class Config:
         from_attributes = True

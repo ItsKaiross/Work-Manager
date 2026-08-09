@@ -5,15 +5,21 @@ from app.schemas.job_application import JobApplicationCreate, JobApplicationOut
 from app.crud import job_application as crud
 from app.crud import resume as resume_crud
 from app.utils.suggestion_generator import generate_preparation_suggestions
+from app.utils.follow_up import compute_follow_up
 
 router = APIRouter(prefix="/applications", tags=["applications"])
+
+def _with_follow_up(app: dict) -> dict:
+    app.update(compute_follow_up(app.get("status"), app.get("updated_at")))
+    return app
 
 @router.get("/", response_model=list[JobApplicationOut])
 async def list_applications(
     conn = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return await crud.get_applications_for_user(conn, current_user["id"])
+    apps = await crud.get_applications_for_user(conn, current_user["id"])
+    return [_with_follow_up(app) for app in apps]
 
 @router.post("/", response_model=JobApplicationOut)
 async def create_application(
@@ -21,7 +27,8 @@ async def create_application(
     conn = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return await crud.create_application(conn, payload.model_dump(), current_user["id"])
+    created = await crud.create_application(conn, payload.model_dump(), current_user["id"])
+    return _with_follow_up(created)
 
 @router.get("/{app_id}", response_model=JobApplicationOut)
 async def get_application(
@@ -32,7 +39,7 @@ async def get_application(
     app = await crud.get_application_by_id(conn, app_id, current_user["id"])
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
-    return app
+    return _with_follow_up(app)
 
 @router.put("/{app_id}", response_model=JobApplicationOut)
 async def update_application(
@@ -44,7 +51,7 @@ async def update_application(
     updated = await crud.update_application(conn, app_id, payload.model_dump(), current_user["id"])
     if not updated:
         raise HTTPException(status_code=404, detail="Application not found")
-    return updated
+    return _with_follow_up(updated)
 
 @router.delete("/{app_id}")
 async def delete_application(

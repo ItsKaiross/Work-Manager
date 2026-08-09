@@ -28,6 +28,10 @@ export default function Homepage() {
 
   const recent = applications.slice(0, 3);
 
+  const needsFollowUp = applications
+    .filter((a) => a.needs_follow_up)
+    .sort((a, b) => (b.days_since_update ?? 0) - (a.days_since_update ?? 0));
+
   const counts = {
     total: applications.length,
     saved: applications.filter((a) => a.status === "saved").length,
@@ -117,6 +121,21 @@ export default function Homepage() {
                 <p className="text-xs text-gray-500">Withdrawn</p>
               </div>
             </div>
+
+            {needsFollowUp.length > 0 && (
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold text-orange-700">
+                    ⏰ Needs Follow-up ({needsFollowUp.length})
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {needsFollowUp.map((app) => (
+                    <ApplicationCard key={app.id} app={app} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Recent Applications</h2>
