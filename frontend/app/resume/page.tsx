@@ -186,7 +186,7 @@ export default function ResumePage() {
               <p className="text-sm">{error}</p>
               {error.includes("Cannot connect") && (
                 <p className="text-sm mt-2">
-                  Make sure the backend server is running on <code className="bg-red-100 px-1 rounded">http://localhost:8000</code>
+                  Make sure the backend server is running on <code className="bg-red-100 px-1 rounded">{process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}</code>
                 </p>
               )}
             </div>

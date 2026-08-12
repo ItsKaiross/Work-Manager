@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getAuthToken } from "@/lib/auth";
 import { Resume, ResumeAnalysis } from "@/types/resume";
 
-const API_URL = "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function useResume(resumeId?: number) {
   const [resume, setResume] = useState<Resume | null>(null);

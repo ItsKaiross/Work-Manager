@@ -11,6 +11,8 @@ import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
 import { getJobCategory } from "@/lib/jobCategories";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 type Status = JobApplication["status"] | "all";
 
 export default function ApplicationsPage() {
@@ -42,7 +44,7 @@ export default function ApplicationsPage() {
     
     try {
       const token = getAuthToken();
-      const response = await fetch("http://localhost:8000/api/resumes/active", {
+      const response = await fetch(`${API_URL}/api/resumes/active`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -60,7 +62,7 @@ export default function ApplicationsPage() {
       const resume = await response.json();
       
       // Call recalculate endpoint
-      const recalcResponse = await fetch(`http://localhost:8000/api/resumes/${resume.id}/recalculate`, {
+      const recalcResponse = await fetch(`${API_URL}/api/resumes/${resume.id}/recalculate`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
