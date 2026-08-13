@@ -85,64 +85,69 @@ def extract_text_from_docx(file_path: str) -> str:
         return ""
 
 
+# Shared skill vocabulary, exposed at module level so job descriptions can be
+# scanned with the same list (see app.crud.resume.calculate_match_score) -
+# matching skill_match against what a job actually asks for, not just
+# whatever fraction of the resume's own skill list happens to appear in it.
+SKILL_KEYWORDS = [
+    # Programming Languages
+    'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'php', 'swift', 'kotlin',
+    'go', 'rust', 'scala', 'r', 'matlab', 'perl', 'shell', 'bash', 'powershell',
+
+    # Web Technologies
+    'html', 'css', 'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask',
+    'fastapi', 'spring', 'asp.net', 'laravel', 'rails', 'next.js', 'nuxt', 'gatsby',
+
+    # Databases
+    'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'oracle', 'sql server',
+    'dynamodb', 'cassandra', 'sqlite', 'mariadb',
+
+    # Cloud & DevOps
+    'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'ci/cd', 'terraform',
+    'ansible', 'gitlab', 'github', 'bitbucket', 'circleci', 'travis ci',
+
+    # Data Science & ML
+    'machine learning', 'deep learning', 'data science', 'tensorflow', 'pytorch', 'scikit-learn',
+    'pandas', 'numpy', 'matplotlib', 'tableau', 'power bi', 'spark', 'hadoop',
+
+    # Mobile Development
+    'ios', 'android', 'react native', 'flutter', 'xamarin', 'mobile development',
+
+    # Other Technical
+    'git', 'agile', 'scrum', 'rest api', 'graphql', 'microservices', 'linux', 'unix',
+    'api', 'json', 'xml', 'testing', 'tdd', 'unit testing', 'integration testing',
+
+    # Video Editing & Motion
+    'premiere pro', 'premiere', 'after effects', 'davinci resolve', 'final cut pro',
+    'final cut', 'avid media composer', 'video editing', 'video production',
+    'motion graphics', 'color grading', 'color correction', 'sound design',
+    'audio editing', 'adobe audition', 'storyboarding', 'cinematography',
+    'capcut', 'filmora',
+
+    # Graphic Design & Creative
+    'photoshop', 'illustrator', 'indesign', 'lightroom', 'adobe xd', 'figma', 'sketch',
+    'canva', 'procreate', 'coreldraw', 'affinity designer', 'affinity photo',
+    'adobe creative suite', 'creative cloud', 'graphic design', 'typography',
+    'branding', 'ui design', 'ux design', 'ui/ux', 'wireframing', 'prototyping',
+    'logo design', 'print design', 'illustration',
+
+    # 3D & Animation
+    'blender', 'cinema 4d', 'maya', '3ds max', '3d modeling', 'animation', 'rigging',
+
+    # Soft Skills
+    'leadership', 'communication', 'teamwork', 'problem solving', 'project management',
+    'analytical', 'critical thinking', 'time management', 'collaboration'
+]
+
+
 def extract_skills(text: str) -> List[str]:
     """
     Extract skills from resume text
     Uses a comprehensive list of common tech and professional skills
     """
     text_lower = text.lower()
-    
-    # Common skills to look for (expandable)
-    skill_keywords = [
-        # Programming Languages
-        'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'php', 'swift', 'kotlin',
-        'go', 'rust', 'scala', 'r', 'matlab', 'perl', 'shell', 'bash', 'powershell',
-        
-        # Web Technologies
-        'html', 'css', 'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask',
-        'fastapi', 'spring', 'asp.net', 'laravel', 'rails', 'next.js', 'nuxt', 'gatsby',
-        
-        # Databases
-        'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'oracle', 'sql server',
-        'dynamodb', 'cassandra', 'sqlite', 'mariadb',
-        
-        # Cloud & DevOps
-        'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'ci/cd', 'terraform',
-        'ansible', 'gitlab', 'github', 'bitbucket', 'circleci', 'travis ci',
-        
-        # Data Science & ML
-        'machine learning', 'deep learning', 'data science', 'tensorflow', 'pytorch', 'scikit-learn',
-        'pandas', 'numpy', 'matplotlib', 'tableau', 'power bi', 'spark', 'hadoop',
-        
-        # Mobile Development
-        'ios', 'android', 'react native', 'flutter', 'xamarin', 'mobile development',
-        
-        # Other Technical
-        'git', 'agile', 'scrum', 'rest api', 'graphql', 'microservices', 'linux', 'unix',
-        'api', 'json', 'xml', 'testing', 'tdd', 'unit testing', 'integration testing',
+    skill_keywords = SKILL_KEYWORDS
 
-        # Video Editing & Motion
-        'premiere pro', 'premiere', 'after effects', 'davinci resolve', 'final cut pro',
-        'final cut', 'avid media composer', 'video editing', 'video production',
-        'motion graphics', 'color grading', 'color correction', 'sound design',
-        'audio editing', 'adobe audition', 'storyboarding', 'cinematography',
-        'capcut', 'filmora',
-
-        # Graphic Design & Creative
-        'photoshop', 'illustrator', 'indesign', 'lightroom', 'adobe xd', 'figma', 'sketch',
-        'canva', 'procreate', 'coreldraw', 'affinity designer', 'affinity photo',
-        'adobe creative suite', 'creative cloud', 'graphic design', 'typography',
-        'branding', 'ui design', 'ux design', 'ui/ux', 'wireframing', 'prototyping',
-        'logo design', 'print design', 'illustration',
-
-        # 3D & Animation
-        'blender', 'cinema 4d', 'maya', '3ds max', '3d modeling', 'animation', 'rigging',
-
-        # Soft Skills
-        'leadership', 'communication', 'teamwork', 'problem solving', 'project management',
-        'analytical', 'critical thinking', 'time management', 'collaboration'
-    ]
-    
     # Order matches by where they first appear in the resume text, not by
     # position in skill_keywords - otherwise categories checked later in the
     # list (e.g. newly added ones) get squeezed out by the cap below even

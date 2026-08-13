@@ -260,17 +260,38 @@ def calculate_match_score(
     to 100 whenever required_experience was None (the common case, since no
     caller ever supplied it), which put a hidden 30-point floor under every
     match score regardless of actual fit.
+
+    skill_match is scored against what the job actually asks for, not what
+    fraction of the resume's own skill list happens to appear in it -
+    dividing by the resume's total skill count unfairly penalizes broad or
+    multi-disciplinary resumes (e.g. someone who is both a developer and a
+    video editor), since skills the posting never mentions still counted
+    against the denominator.
     """
     if not resume_skills:
         resume_skills = []
 
-    # Convert to lowercase for matching
-    resume_skills_lower = [skill.lower() for skill in resume_skills]
+    from app.utils.resume_parser import SKILL_KEYWORDS
+    import re
+
+    resume_skills_lower = set(skill.lower() for skill in resume_skills)
     job_desc_lower = job_description.lower() if job_description else ""
 
-    # Skill matching
-    matched_skills = sum(1 for skill in resume_skills_lower if skill in job_desc_lower)
-    skill_match = (matched_skills / len(resume_skills) * 100) if resume_skills else 0
+    job_mentioned_skills = [
+        kw for kw in SKILL_KEYWORDS if re.search(r'\b' + re.escape(kw) + r'\b', job_desc_lower)
+    ]
+
+    if job_mentioned_skills:
+        matched = sum(1 for kw in job_mentioned_skills if kw in resume_skills_lower)
+        skill_match = (matched / len(job_mentioned_skills)) * 100
+    elif resume_skills:
+        # The posting doesn't literally mention any skill from our known
+        # vocabulary (short/vague description) - fall back to the old
+        # substring signal rather than reporting a match with no basis at all.
+        matched_skills = sum(1 for skill in resume_skills_lower if skill in job_desc_lower)
+        skill_match = (matched_skills / len(resume_skills)) * 100
+    else:
+        skill_match = 0
 
     # Fall back to inferring the required experience from the job posting
     # text itself (e.g. "3+ years experience") when the caller doesn't know it.
