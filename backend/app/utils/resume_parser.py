@@ -141,24 +141,32 @@ def extract_skills(text: str) -> List[str]:
         'analytical', 'critical thinking', 'time management', 'collaboration'
     ]
     
+    # Order matches by where they first appear in the resume text, not by
+    # position in skill_keywords - otherwise categories checked later in the
+    # list (e.g. newly added ones) get squeezed out by the cap below even
+    # when they're clearly present in the text.
     found_skills = []
     for skill in skill_keywords:
         # Use word boundaries to avoid partial matches
         pattern = r'\b' + re.escape(skill) + r'\b'
-        if re.search(pattern, text_lower):
+        match = re.search(pattern, text_lower)
+        if match:
             # Capitalize properly for display
-            found_skills.append(skill.title() if skill.islower() else skill)
-    
-    # Remove duplicates while preserving order
+            display_name = skill.title() if skill.islower() else skill
+            found_skills.append((match.start(), display_name))
+
+    found_skills.sort(key=lambda item: item[0])
+
+    # Remove duplicates while preserving that text-appearance order
     seen = set()
     unique_skills = []
-    for skill in found_skills:
+    for _, skill in found_skills:
         skill_lower = skill.lower()
         if skill_lower not in seen:
             seen.add(skill_lower)
             unique_skills.append(skill)
-    
-    return unique_skills[:20]  # Limit to top 20 skills
+
+    return unique_skills[:25]  # Limit to top 25 skills, prioritizing what appears first in the resume
 
 
 def extract_experience_years(text: str) -> Optional[float]:
