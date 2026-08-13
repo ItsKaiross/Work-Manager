@@ -1,6 +1,6 @@
-# Work Manager 🎯
+# Work Manager 🚀
 
-A comprehensive job application tracking system with AI-powered resume matching and interview preparation suggestions.
+A comprehensive job application tracking system with AI-powered resume matching, interview preparation suggestions, and a full-featured admin panel. Built with FastAPI and Next.js.
 
 ## Features ✨
 
@@ -8,10 +8,10 @@ A comprehensive job application tracking system with AI-powered resume matching 
 - Track all your job applications in one place
 - Status tracking: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn
 - Store job details: company, position, location, salary, job description, notes
-- Filter applications by status
+- Filter applications by status and category
 - Search applications by company, position, or location
 - Filter applications by applied date range (From/To)
-- Filter applications by work category, auto-detected from keywords in the position/description (e.g. Video Editor, Full Stack, Frontend, Backend, Mobile, Data, DevOps, Design, Product, QA)
+- Auto-categorization by work type (Video Editor, Full Stack, Frontend, Backend, Mobile, Data, DevOps, Design, Product, QA)
 - Auto-refresh every 30 seconds
 - Multi-currency support (USD, EUR, GBP, JPY, CNY, INR, AUD, CAD, SGD, PHP, MYR, THB, VND, IDR)
 
@@ -28,6 +28,7 @@ A comprehensive job application tracking system with AI-powered resume matching 
 - Automatic parsing of skills, experience, and education
 - Support for multiple resumes
 - Active resume selection
+- Resume performance analysis with AI
 
 ### 🎯 AI-Powered Resume Matching
 - **Automatic match score calculation** when adding new applications
@@ -47,18 +48,53 @@ A comprehensive job application tracking system with AI-powered resume matching 
 - Position-level specific advice (Senior, Junior, Manager)
 - Generated based on job description and your resume
 
+### 🔐 Admin Panel
+- **Dashboard**: Overview with real-time statistics
+  - Total users, active users, admin count
+  - Total applications across all users
+  - Quick action buttons
+  - System status display
+- **User Management**: Full CRUD operations for user accounts
+  - Create, update, and delete users
+  - Toggle user active/inactive status
+  - Grant or revoke admin privileges
+  - View user details and activity timestamps
+  - Prevent self-deletion and self-privilege removal
+- **Settings**: System configuration and customization
+  - Dark/Light mode toggle with persistence
+  - System information display
+  - Admin actions panel
+
+### 🎨 Theme Support
+- **Dark Mode**: Full dark theme support across the entire application
+- **Light Mode**: Clean, professional light theme
+- **Persistent Preferences**: Theme choice saved to browser localStorage
+- **Smooth Transitions**: Seamless switching between themes
+- **Context-Based**: Uses React Context API for global theme state
+
+### 🔒 Authentication & Security
+- **Email/Password Login**: Traditional authentication with JWT
+- **Google OAuth**: Quick sign-in with Google account
+- **Role-Based Access Control**: Admin and user roles with appropriate permissions
+- **Protected Routes**: Admin panel requires admin privileges
+- **Secure JWT Tokens**: Token-based authentication for all API calls
+- **Password Hashing**: Bcrypt for secure password storage
+
 ## Tech Stack 🛠️
 
 ### Backend
 - **Framework**: FastAPI (Python)
 - **Database**: MySQL with asyncmy (async MySQL driver)
-- **Authentication**: JWT tokens
-- **Resume Parsing**: PyPDF2, python-docx, python-pptx
+- **Authentication**: JWT tokens + OAuth2 (Google)
+- **AI Integration**: OpenAI GPT for resume analysis and job extraction
+- **Storage**: Supabase for resume file storage
+- **Resume Parsing**: PyPDF2, python-docx
 
 ### Frontend
-- **Framework**: Next.js 15 with TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: React Hooks
+- **Framework**: Next.js 16 with TypeScript
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS v4
+- **State Management**: React Hooks + Context API
 - **Routing**: Next.js App Router
 
 ## Project Structure 📁
@@ -70,9 +106,11 @@ Work Manager/
 │   │   ├── core/           # Authentication & security
 │   │   ├── crud/           # Database operations
 │   │   │   ├── job_application.py
-│   │   │   └── resume.py
+│   │   │   ├── resume.py
+│   │   │   └── user.py
 │   │   ├── routers/        # API endpoints
 │   │   │   ├── auth.py
+│   │   │   ├── admin.py           # Admin endpoints (NEW)
 │   │   │   ├── job_applications.py
 │   │   │   ├── resume.py
 │   │   │   └── extract.py
@@ -82,8 +120,28 @@ Work Manager/
 │   │   │   └── suggestion_generator.py
 │   │   ├── database.py
 │   │   └── main.py
-│   ├── uploads/           # Resume storage
 │   ├── schema.sql         # Database schema
+│   └── requirements.txt
+├── frontend/
+│   ├── app/
+│   │   ├── admin/                 # Admin panel (NEW)
+│   │   │   ├── dashboard/        # Statistics overview
+│   │   │   ├── users/            # User management
+│   │   │   ├── settings/         # Theme & settings
+│   │   │   └── layout.tsx        # Admin layout
+│   │   ├── applications/   # Job applications pages
+│   │   ├── resume/         # Resume management
+│   │   ├── components/     # React components
+│   │   └── page.tsx        # Login page
+│   ├── contexts/          # React contexts (NEW)
+│   │   └── ThemeContext.tsx     # Theme management
+│   ├── lib/               # Utilities and API calls
+│   │   ├── api.ts
+│   │   └── admin-api.ts          # Admin API client (NEW)
+│   ├── types/             # TypeScript types
+│   └── package.json
+└── README.md
+```
 │   ├── resume_schema.sql  # Resume tables schema
 │   └── requirements.txt
 │
@@ -240,70 +298,81 @@ Work Manager/
    - Dashboard highlights applications with no status update in a while
    - Open the flagged application and follow up, or update its status to clear the flag
 
-## API Endpoints 🔌
-
-### Authentication
-- `POST /register` - Create new account
-- `POST /token` - Login and get JWT token
-
-### Applications
-- `GET /applications` - List all applications (includes `needs_follow_up` / `days_since_update`)
-- `POST /applications` - Create new application (auto-calculates match score)
-- `GET /applications/{id}` - Get application details
-- `PUT /applications/{id}` - Update application
-- `DELETE /applications/{id}` - Delete application
-- `GET /applications/{id}/suggestions` - Get interview preparation suggestions
-
-### Resume
-- `POST /api/resumes/upload` - Upload resume (auto-parses and calculates matches)
-- `GET /api/resumes` - List all resumes
-- `GET /api/resumes/active` - Get active resume
-- `GET /api/resumes/{id}/analysis` - Get resume performance analysis
-- `POST /api/resumes/{id}/recalculate` - Recalculate match scores
-
 ## Database Schema 🗄️
 
 ### Key Tables
 
+**users**
+- User authentication and role management
+- Fields: id, email, hashed_password, auth_provider, is_active, is_admin, created_at
+
 **job_applications**
 - Job tracking with company, position, status, description, etc.
 - Links to users for multi-user support
+- Fields: id, user_id, company, position, location, status, description, requirements, salary, currency, url, notes, applied_date, created_at, updated_at
 
 **resumes**
 - Stores resume metadata and parsed data
 - JSON fields for skills and parsed information
 - `is_active` flag for active resume selection
+- Fields: id, user_id, filename, file_path, parsed_data, is_active, created_at
 
 **resume_match_scores**
 - Links resumes to applications
 - Stores match_percentage, skill_match, experience_match
 - **UNIQUE constraint** on (resume_id, application_id) prevents duplicates
 
-**users**
-- User authentication and management
+## Usage Guide 📖
+
+### For Regular Users
+
+1. **Create Account & Login**
+2. **Upload Resume** → Navigate to "Resume & Success Rate"
+3. **Add Applications** → Click "Add Application" (paste URL for auto-extraction)
+4. **Track Progress** → Update statuses as you progress through the hiring process
+5. **Follow-up Reminders** → Check dashboard for stale applications
+6. **Interview Prep** → Get AI-powered suggestions for each application
+
+### For Administrators
+
+1. **Access Admin Panel** → Click "⚡ Admin Panel" in sidebar
+2. **View Dashboard** → Monitor system statistics
+3. **Manage Users** → Create, update, or delete user accounts
+4. **Assign Roles** → Grant or revoke admin privileges
+5. **Toggle Theme** → Switch between light and dark modes in Settings
 
 ## Troubleshooting 🔧
 
-### Match scores not showing?
-1. Ensure resume tables exist: Run `resume_schema.sql`
-2. Check for unique constraint: Run `fix_duplicate_match_scores.sql`
+### Common Issues
+
+**Match scores not showing?**
+1. Ensure resume tables exist: Run `schema.sql`
+2. Upload and set an active resume
 3. Restart backend server
 
-### Duplicate application cards?
-- Run the fix script: `mysql -u user -p work_manager < fix_duplicate_match_scores.sql`
-- This adds UNIQUE constraint to prevent duplicate match scores
-
-### Resume upload fails?
-- Check `backend/uploads/resumes` directory exists
-- Verify file permissions
-- Ensure file type is supported (PDF, DOC, DOCX, TXT)
-
-### Match scores not updating automatically?
-- Verify you have an active resume uploaded
+**Resume upload fails?**
+- Check file type is supported (PDF, DOC, DOCX, TXT)
+- Verify file size is under 10MB
 - Check backend logs for errors
-- Ensure database unique constraint is in place
+
+**Admin panel not accessible?**
+- Verify `ADMIN_EMAIL` and `ADMIN_PASSWORD` are set in backend `.env.local`
+- Restart backend to create admin user
+- Check database `users` table for `is_admin=1`
+
+**Theme not persisting?**
+- Check browser localStorage is enabled
+- Try clearing browser cache
+- Verify JavaScript is enabled
+
+**Google OAuth not working?**
+- Verify Google OAuth credentials in `.env.local`
+- Check redirect URI matches Google Cloud Console settings
+- Ensure `FRONTEND_URL` is correct
 
 ## Contributing 🤝
+
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
@@ -313,15 +382,36 @@ Work Manager/
 
 ## Future Enhancements 🚀
 
-- [ ] Email notifications for application deadlines
+- [ ] Email notifications for application deadlines and follow-ups
 - [ ] Interview scheduling and calendar integration
-- [ ] Salary comparison and analytics
+- [ ] Salary comparison and analytics across applications
 - [ ] Application templates for common roles
 - [ ] Export applications to CSV/PDF
 - [ ] Mobile app (React Native)
-- [ ] Integration with job boards (LinkedIn, Indeed)
-- [ ] AI cover letter generation
-- [ ] Interview question practice mode
+- [ ] Integration with job boards (LinkedIn, Indeed, Glassdoor)
+- [ ] AI cover letter generation based on job description
+- [ ] Interview question practice mode with mock interviews
+- [ ] Team collaboration features for shared job searches
+- [ ] Browser extension for one-click job posting imports
+
+## Security Features 🛡️
+
+- **JWT Authentication**: Secure token-based authentication
+- **Role-Based Access Control**: Admin and user roles with appropriate permissions
+- **Protected Routes**: Admin routes require admin privileges
+- **Password Hashing**: Bcrypt for secure password storage
+- **OAuth2 Integration**: Secure Google authentication
+- **Self-Protection**: Admins cannot delete or deactivate themselves
+- **Token Expiration**: Automatic session management
+
+## Performance Optimizations ⚡
+
+- **Async Database Operations**: Non-blocking MySQL queries with asyncmy
+- **Auto-refresh**: Smart 30-second polling for application updates
+- **Optimistic UI Updates**: Instant feedback for user actions
+- **Code Splitting**: Next.js automatic code splitting
+- **Image Optimization**: Next.js Image component
+- **CSS Purging**: Tailwind CSS automatic unused style removal
 
 ## License 📄
 
@@ -337,10 +427,15 @@ For issues, questions, or suggestions:
 
 - FastAPI for the excellent backend framework
 - Next.js team for the powerful React framework
+- OpenAI for AI-powered features
+- Supabase for cloud storage
+- Tailwind CSS for utility-first styling
 - All contributors who helped improve this project
 
 ---
 
 **Built with ❤️ for job seekers everywhere**
+
+Last Updated: August 2026
 
 Happy job hunting! 🎯
