@@ -1,11 +1,20 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clearAuthToken } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/api";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    getCurrentUser()
+      .then((me) => setIsAdmin(me.is_admin))
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   function handleLogout() {
     clearAuthToken();
@@ -18,7 +27,7 @@ export default function Sidebar() {
     { href: "/applications/new", label: "Add Application" },
     { href: "/resume", label: "Resume & Success Rate" },
     { href: "/settings", label: "Settings" },
-    { href: "/admin/dashboard", label: "⚡ Admin Panel", admin: true },
+    ...(isAdmin ? [{ href: "/admin/dashboard", label: "⚡ Admin Panel", admin: true }] : []),
   ];
 
   return (
