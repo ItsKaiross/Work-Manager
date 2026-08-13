@@ -85,28 +85,10 @@ async def upload_resume(
             education_level=parsed_data.get('education_level')
         )
         
-        # Calculate match scores for all existing applications
+        # Calculate match scores for all existing applications (AI-assisted
+        # with a heuristic fallback per-application, see recalculate_match_scores_for_applications)
         applications = await job_crud.get_applications_for_user(conn, current_user["id"])
-        
-        matched_count = 0
-        if resume.get('skills') and len(resume['skills']) > 0:
-            for app in applications:
-                match_scores = resume_crud.calculate_match_score(
-                    resume_skills=resume['skills'],
-                    job_description=app.get('description', '') or '',
-                    resume_experience=resume.get('experience_years', 0),
-                    required_experience=None
-                )
-                
-                await resume_crud.save_match_score(
-                    conn=conn,
-                    resume_id=resume['id'],
-                    application_id=app['id'],
-                    match_percentage=match_scores['match_percentage'],
-                    skill_match=match_scores['skill_match'],
-                    experience_match=match_scores['experience_match']
-                )
-                matched_count += 1
+        matched_count = await resume_crud.recalculate_match_scores_for_applications(conn, resume, applications)
         
         return {
             "message": "Resume uploaded and parsed successfully",
@@ -274,27 +256,8 @@ async def recalculate_match_scores(
         raise HTTPException(status_code=404, detail="Resume not found")
     
     applications = await job_crud.get_applications_for_user(conn, current_user["id"])
-    matched_count = 0
-    
-    if resume.get('skills') and len(resume['skills']) > 0:
-        for app in applications:
-            match_scores = resume_crud.calculate_match_score(
-                resume_skills=resume['skills'],
-                job_description=app.get('description', '') or '',
-                resume_experience=resume.get('experience_years', 0),
-                required_experience=None
-            )
-            
-            await resume_crud.save_match_score(
-                conn=conn,
-                resume_id=resume['id'],
-                application_id=app['id'],
-                match_percentage=match_scores['match_percentage'],
-                skill_match=match_scores['skill_match'],
-                experience_match=match_scores['experience_match']
-            )
-            matched_count += 1
-    
+    matched_count = await resume_crud.recalculate_match_scores_for_applications(conn, resume, applications)
+
     return {
         "message": "Match scores recalculated successfully",
         "applications_processed": matched_count

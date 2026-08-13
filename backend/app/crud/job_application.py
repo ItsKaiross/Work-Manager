@@ -142,14 +142,14 @@ async def create_application(conn, data: dict, user_id: int) -> dict:
         resume = await resume_crud.get_active_resume(conn, user_id)
         
         if resume and resume.get('skills'):
-            # Calculate match score
-            match_scores = resume_crud.calculate_match_score(
-                resume_skills=resume['skills'],
+            # Calculate match score (AI-assisted with a heuristic fallback)
+            match_scores = await resume_crud.get_match_score(
+                conn,
+                resume,
                 job_description=data.get('description', '') or '',
-                resume_experience=resume.get('experience_years', 0),
-                required_experience=None
+                position=data.get('position', '') or '',
             )
-            
+
             # Save match score
             await resume_crud.save_match_score(
                 conn=conn,

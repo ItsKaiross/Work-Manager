@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict, Any
+import asyncio
 import json
 
 
@@ -291,6 +292,118 @@ def calculate_match_score(
         "skill_match": round(skill_match, 2),
         "experience_match": round(experience_match, 2) if experience_match is not None else None,
     }
+
+
+async def get_match_score(
+    conn,
+    resume: Dict[str, Any],
+    job_description: str,
+    position: str = "",
+) -> Dict[str, Optional[float]]:
+    """Compute a resume-to-job match score.
+
+    Tries AI first for a holistic, profession-agnostic judgment; falls back
+    to the keyword-based heuristic on any failure or if AI isn't configured.
+    """
+    resume_skills = resume.get('skills') or []
+    resume_experience = resume.get('experience_years')
+    raw_text = (resume.get('parsed_data') or {}).get('raw_text', '')
+
+    from app.integrations.ai_service import ai_calculate_match_score
+    try:
+        ai_result = await ai_calculate_match_score(
+            conn,
+            resume_skills=resume_skills,
+            resume_raw_text=raw_text,
+            resume_experience=resume_experience,
+            job_description=job_description,
+            position=position,
+        )
+    except Exception:
+        ai_result = None
+
+    if ai_result:
+        return ai_result
+
+    return calculate_match_score(
+        resume_skills=resume_skills,
+        job_description=job_description,
+        resume_experience=resume_experience or 0,
+        required_experience=None,
+    )
+
+
+async def recalculate_match_scores_for_applications(
+    conn,
+    resume: Dict[str, Any],
+    applications: List[Dict[str, Any]],
+    concurrency: int = 5,
+) -> int:
+    """Compute and save match scores for a resume against a list of applications.
+
+    The AI calls run concurrently (bounded by `concurrency`) since each one is
+    an independent HTTP round-trip - without that, recalculating scores for
+    someone with dozens of saved applications would take one AI round-trip's
+    worth of latency per application. All DB access (the one API-key lookup,
+    and every save) happens sequentially before/after that concurrent phase,
+    since a single MySQL connection isn't safe to use from multiple
+    coroutines at once.
+    """
+    if not resume.get('skills'):
+        return 0
+
+    resume_skills = resume.get('skills') or []
+    resume_experience = resume.get('experience_years')
+    raw_text = (resume.get('parsed_data') or {}).get('raw_text', '')
+
+    from app.crud.settings import get_groq_api_key
+    from app.integrations.ai_service import ai_calculate_match_score_with_key
+
+    api_key = await get_groq_api_key(conn)
+    semaphore = asyncio.Semaphore(concurrency)
+
+    async def _compute(app: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Optional[float]]]:
+        job_description = app.get('description', '') or ''
+        position = app.get('position', '') or ''
+
+        ai_result = None
+        if api_key:
+            async with semaphore:
+                try:
+                    ai_result = await ai_calculate_match_score_with_key(
+                        api_key,
+                        resume_skills=resume_skills,
+                        resume_raw_text=raw_text,
+                        resume_experience=resume_experience,
+                        job_description=job_description,
+                        position=position,
+                    )
+                except Exception:
+                    ai_result = None
+
+        if ai_result:
+            return app, ai_result
+
+        return app, calculate_match_score(
+            resume_skills=resume_skills,
+            job_description=job_description,
+            resume_experience=resume_experience or 0,
+            required_experience=None,
+        )
+
+    results = await asyncio.gather(*(_compute(app) for app in applications))
+
+    for app, match_scores in results:
+        await save_match_score(
+            conn=conn,
+            resume_id=resume['id'],
+            application_id=app['id'],
+            match_percentage=match_scores['match_percentage'],
+            skill_match=match_scores['skill_match'],
+            experience_match=match_scores['experience_match'],
+        )
+
+    return len(applications)
 
 
 async def save_match_score(

@@ -50,28 +50,12 @@ async def recalculate_all_matches():
                 # Get all applications
                 applications = await job_crud.get_applications_for_user(conn, user_id)
                 print(f"  Applications: {len(applications)}")
-                
-                # Calculate match scores for each application
-                for app in applications:
-                    if resume.get('skills') and len(resume['skills']) > 0:
-                        match_scores = resume_crud.calculate_match_score(
-                            resume_skills=resume['skills'],
-                            job_description=app.get('description', '') or '',
-                            resume_experience=resume.get('experience_years', 0),
-                            required_experience=None
-                        )
-                        
-                        await resume_crud.save_match_score(
-                            conn=conn,
-                            resume_id=resume['id'],
-                            application_id=app['id'],
-                            match_percentage=match_scores['match_percentage'],
-                            skill_match=match_scores['skill_match'],
-                            experience_match=match_scores['experience_match']
-                        )
-                        total_matched += 1
-                
-                print(f"  Matched {len(applications)} applications")
+
+                # Calculate match scores (AI-assisted with a heuristic fallback)
+                matched = await resume_crud.recalculate_match_scores_for_applications(conn, resume, applications)
+                total_matched += matched
+
+                print(f"  Matched {matched} applications")
             
             print(f"\n✅ Successfully recalculated {total_matched} match scores!")
             
