@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, extract, resume
+from app.routers import auth, extract, resume, admin
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.routers import job_applications
@@ -25,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(job_applications.router)
 app.include_router(extract.router)
 app.include_router(resume.router)

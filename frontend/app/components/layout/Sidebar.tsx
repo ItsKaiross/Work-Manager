@@ -17,6 +17,7 @@ export default function Sidebar() {
     { href: "/applications", label: "Applications" },
     { href: "/applications/new", label: "Add Application" },
     { href: "/resume", label: "Resume & Success Rate" },
+    { href: "/admin/dashboard", label: "⚡ Admin Panel", admin: true },
   ];
 
   return (
@@ -29,7 +30,7 @@ export default function Sidebar() {
             key={link.href}
             href={link.href}
             className={`px-3 py-2 rounded-lg text-sm transition ${
-              pathname === link.href
+              pathname === link.href || (link.admin && pathname.startsWith("/admin"))
                 ? "bg-blue-500 text-white"
                 : "text-gray-700 hover:bg-gray-200"
             }`}
