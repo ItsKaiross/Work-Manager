@@ -12,6 +12,9 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", weigh
 export const metadata: Metadata = {
   title: "Work Manager",
   description: "Track your job applications",
+  icons: {
+    icon: "/images/w.ico",
+  },
 };
 
 const themeInitScript = `
