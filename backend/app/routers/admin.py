@@ -15,7 +15,9 @@ from app.crud.user import (
 )
 from app.crud.job_application import get_applications_for_user
 from app.crud.resume import get_active_resume, get_resume_by_id_unscoped
+from app.crud.settings import get_groq_api_key, set_setting
 from app.schemas.auth import UserResponse, UserUpdateRequest, UserCreateRequest
+from app.schemas.settings import GroqApiKeyUpdate
 from app.core.security import hash_password
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -139,6 +141,41 @@ async def download_resume_file(
         raise HTTPException(status_code=404, detail="Resume file not found on server")
 
     return FileResponse(file_path, filename=resume["filename"])
+
+@router.get("/settings")
+async def get_admin_settings(
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Get AI configuration status (admin only). Never returns the raw key."""
+    key = await get_groq_api_key(conn)
+    preview = f"{key[:4]}...{key[-4:]}" if key and len(key) > 8 else None
+    return {
+        "groq_api_key_set": bool(key),
+        "groq_api_key_preview": preview,
+    }
+
+@router.put("/settings/groq-api-key")
+async def update_groq_api_key(
+    payload: GroqApiKeyUpdate,
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Set/update the Groq API key used for AI-assisted features (admin only)"""
+    key = payload.groq_api_key.strip()
+    if not key:
+        raise HTTPException(status_code=400, detail="API key cannot be empty")
+    await set_setting(conn, "groq_api_key", key)
+    return {"message": "Groq API key updated"}
+
+@router.delete("/settings/groq-api-key")
+async def clear_groq_api_key(
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Clear the Groq API key, disabling AI-assisted features (admin only)"""
+    await set_setting(conn, "groq_api_key", "")
+    return {"message": "Groq API key cleared"}
 
 @router.get("/stats")
 async def get_dashboard_stats(

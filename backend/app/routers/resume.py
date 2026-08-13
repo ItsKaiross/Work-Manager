@@ -12,6 +12,7 @@ from app.crud import resume as resume_crud
 from app.crud import job_application as job_crud
 from app.schemas.resume import Resume, ResumeAnalysis
 from app.utils.resume_parser import parse_resume
+from app.integrations.ai_service import ai_enrich_resume
 
 router = APIRouter(prefix="/api/resumes", tags=["resumes"])
 
@@ -56,6 +57,19 @@ async def upload_resume(
     print(f"Parsing resume: {file_path}")
     parsed_data = parse_resume(file_path)
     print(f"Parsed data: Skills={len(parsed_data['skills'])}, Experience={parsed_data['experience_years']}, Education={parsed_data['education_level']}")
+
+    # Try AI-based enrichment on top of the heuristic parse; on any failure or
+    # if AI isn't configured, the heuristic parsed_data above is used as-is.
+    try:
+        ai_data = await ai_enrich_resume(conn, parsed_data.get("raw_text", ""))
+    except Exception:
+        ai_data = None
+    if ai_data:
+        parsed_data["skills"] = ai_data["skills"] or parsed_data["skills"]
+        if ai_data["experience_years"] is not None:
+            parsed_data["experience_years"] = ai_data["experience_years"]
+        if ai_data["education_level"]:
+            parsed_data["education_level"] = ai_data["education_level"]
     
     # Create resume record
     try:

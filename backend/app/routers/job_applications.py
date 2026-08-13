@@ -6,6 +6,7 @@ from app.crud import job_application as crud
 from app.crud import resume as resume_crud
 from app.utils.suggestion_generator import generate_preparation_suggestions
 from app.utils.follow_up import compute_follow_up
+from app.integrations.ai_service import ai_generate_suggestions
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -89,15 +90,29 @@ async def get_preparation_suggestions(
     # Extract job description skills if available
     job_desc = app.get('description', '') or ''
     
-    # Generate suggestions
-    suggestions = generate_preparation_suggestions(
-        job_description=job_desc,
-        position=app.get('position', ''),
-        company=app.get('company', ''),
-        match_percentage=app.get('match_percentage'),
-        resume_skills=resume_skills,
-        missing_skills=None  # Could be calculated from match analysis
-    )
+    # Generate suggestions - try AI first, fall back to the heuristic
+    # template-based generator on any failure or if AI isn't configured.
+    try:
+        suggestions = await ai_generate_suggestions(
+            conn,
+            job_description=job_desc,
+            position=app.get('position', ''),
+            company=app.get('company', ''),
+            match_percentage=app.get('match_percentage'),
+            resume_skills=resume_skills,
+        )
+    except Exception:
+        suggestions = None
+
+    if not suggestions:
+        suggestions = generate_preparation_suggestions(
+            job_description=job_desc,
+            position=app.get('position', ''),
+            company=app.get('company', ''),
+            match_percentage=app.get('match_percentage'),
+            resume_skills=resume_skills,
+            missing_skills=None  # Could be calculated from match analysis
+        )
     
     return {
         "application_id": app_id,

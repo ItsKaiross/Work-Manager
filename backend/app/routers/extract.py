@@ -1,11 +1,14 @@
 import logging
 
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, HttpUrl
 import httpx
 
+from app.database import get_db
 from app.core.deps import get_current_user
 from app.integrations.job_extractor import fetch_html, extract_structured_data, fallback_extract, extract_job_source
+from app.integrations.ai_service import ai_extract_job_fields
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +20,7 @@ class UrlInput(BaseModel):
 @router.post("/extract")
 async def extract_job_details(
     payload: UrlInput,
+    conn = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     try:
@@ -59,6 +63,22 @@ async def extract_job_details(
         for field, value in fallback.items():
             if not data.get(field) and value:
                 data[field] = value
+
+    # AI gap-filling: only invoked when heuristics still left fields blank, and
+    # only ever used to fill those specific blanks - never overrides a value the
+    # heuristics already found. Silently no-ops if AI isn't configured/available.
+    missing_fields = [f for f in ("position", "company", "location", "salary_range", "description") if not data.get(f)]
+    if missing_fields:
+        try:
+            page_text = BeautifulSoup(html, "lxml").get_text(separator=" ", strip=True)
+            ai_fields = await ai_extract_job_fields(conn, page_text, missing_fields)
+        except Exception:
+            logger.warning("AI extraction failed for %s", payload.url, exc_info=True)
+            ai_fields = None
+        if ai_fields:
+            for field, value in ai_fields.items():
+                if not data.get(field) and value:
+                    data[field] = value
 
     data.setdefault("position", None)
     data.setdefault("company", None)

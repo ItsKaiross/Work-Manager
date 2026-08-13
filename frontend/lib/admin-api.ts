@@ -141,6 +141,48 @@ export async function downloadResumeFile(resumeId: number, filename: string): Pr
   window.URL.revokeObjectURL(url);
 }
 
+export interface AiSettings {
+  groq_api_key_set: boolean;
+  groq_api_key_preview: string | null;
+}
+
+export async function getAiSettings(): Promise<AiSettings> {
+  const res = await fetch(`${API_URL}/admin/settings`, {
+    headers: { ...authHeader() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to fetch AI settings" }));
+    throw new Error(err.detail || "Failed to fetch AI settings");
+  }
+  return res.json();
+}
+
+export async function updateGroqApiKey(apiKey: string): Promise<void> {
+  const res = await fetch(`${API_URL}/admin/settings/groq-api-key`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify({ groq_api_key: apiKey }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to update Groq API key" }));
+    throw new Error(err.detail || "Failed to update Groq API key");
+  }
+}
+
+export async function clearGroqApiKey(): Promise<void> {
+  const res = await fetch(`${API_URL}/admin/settings/groq-api-key`, {
+    method: "DELETE",
+    headers: { ...authHeader() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to clear Groq API key" }));
+    throw new Error(err.detail || "Failed to clear Groq API key");
+  }
+}
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   const res = await fetch(`${API_URL}/admin/stats`, {
     headers: { ...authHeader() },
