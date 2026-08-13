@@ -118,7 +118,24 @@ def extract_skills(text: str) -> List[str]:
         # Other Technical
         'git', 'agile', 'scrum', 'rest api', 'graphql', 'microservices', 'linux', 'unix',
         'api', 'json', 'xml', 'testing', 'tdd', 'unit testing', 'integration testing',
-        
+
+        # Video Editing & Motion
+        'premiere pro', 'premiere', 'after effects', 'davinci resolve', 'final cut pro',
+        'final cut', 'avid media composer', 'video editing', 'video production',
+        'motion graphics', 'color grading', 'color correction', 'sound design',
+        'audio editing', 'adobe audition', 'storyboarding', 'cinematography',
+        'capcut', 'filmora',
+
+        # Graphic Design & Creative
+        'photoshop', 'illustrator', 'indesign', 'lightroom', 'adobe xd', 'figma', 'sketch',
+        'canva', 'procreate', 'coreldraw', 'affinity designer', 'affinity photo',
+        'adobe creative suite', 'creative cloud', 'graphic design', 'typography',
+        'branding', 'ui design', 'ux design', 'ui/ux', 'wireframing', 'prototyping',
+        'logo design', 'print design', 'illustration',
+
+        # 3D & Animation
+        'blender', 'cinema 4d', 'maya', '3ds max', '3d modeling', 'animation', 'rigging',
+
         # Soft Skills
         'leadership', 'communication', 'teamwork', 'problem solving', 'project management',
         'analytical', 'critical thinking', 'time management', 'collaboration'

@@ -18,7 +18,7 @@ export interface ResumeMatchScore {
   application_id: number;
   match_percentage: number;
   skill_match: number;
-  experience_match: number;
+  experience_match: number | null;
   calculated_at: string;
 }
 

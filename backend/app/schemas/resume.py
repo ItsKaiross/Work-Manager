@@ -46,7 +46,7 @@ class ResumeMatchScore(BaseModel):
     application_id: int
     match_percentage: float
     skill_match: float
-    experience_match: float
+    experience_match: Optional[float] = None
     calculated_at: datetime
 
     class Config:

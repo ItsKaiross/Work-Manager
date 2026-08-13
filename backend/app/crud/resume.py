@@ -250,34 +250,46 @@ def calculate_match_score(
     job_description: str,
     resume_experience: float,
     required_experience: Optional[float] = None
-) -> Dict[str, float]:
-    """Calculate match score between resume and job"""
+) -> Dict[str, Optional[float]]:
+    """Calculate match score between resume and job.
+
+    experience_match only factors into the overall score when a required-
+    experience figure is actually known - either passed in explicitly, or
+    inferred from the job description text. Previously it silently defaulted
+    to 100 whenever required_experience was None (the common case, since no
+    caller ever supplied it), which put a hidden 30-point floor under every
+    match score regardless of actual fit.
+    """
     if not resume_skills:
         resume_skills = []
-    
+
     # Convert to lowercase for matching
     resume_skills_lower = [skill.lower() for skill in resume_skills]
     job_desc_lower = job_description.lower() if job_description else ""
-    
+
     # Skill matching
     matched_skills = sum(1 for skill in resume_skills_lower if skill in job_desc_lower)
     skill_match = (matched_skills / len(resume_skills) * 100) if resume_skills else 0
-    
-    # Experience matching
-    experience_match = 100.0
+
+    # Fall back to inferring the required experience from the job posting
+    # text itself (e.g. "3+ years experience") when the caller doesn't know it.
+    if required_experience is None and job_description:
+        from app.utils.resume_parser import extract_experience_years
+        required_experience = extract_experience_years(job_description)
+
+    experience_match: Optional[float] = None
     if required_experience and resume_experience:
-        if resume_experience >= required_experience:
-            experience_match = 100.0
-        else:
-            experience_match = (resume_experience / required_experience * 100)
-    
-    # Overall match (weighted average)
-    match_percentage = (skill_match * 0.7) + (experience_match * 0.3)
-    
+        experience_match = min(100.0, (resume_experience / required_experience) * 100)
+
+    if experience_match is not None:
+        match_percentage = (skill_match * 0.7) + (experience_match * 0.3)
+    else:
+        match_percentage = skill_match
+
     return {
         "match_percentage": round(match_percentage, 2),
         "skill_match": round(skill_match, 2),
-        "experience_match": round(experience_match, 2)
+        "experience_match": round(experience_match, 2) if experience_match is not None else None,
     }
 
 
@@ -287,7 +299,7 @@ async def save_match_score(
     application_id: int,
     match_percentage: float,
     skill_match: float,
-    experience_match: float
+    experience_match: Optional[float] = None
 ) -> int:
     """Save match score to database"""
     query = """
