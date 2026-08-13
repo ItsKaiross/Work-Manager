@@ -1,8 +1,9 @@
+import { getAuthToken } from "@/lib/auth";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
 function authHeader(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  const token = localStorage.getItem("auth_token");
+  const token = getAuthToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -96,6 +97,29 @@ export async function deleteUser(userId: number): Promise<void> {
     const err = await res.json().catch(() => ({ detail: "Failed to delete user" }));
     throw new Error(err.detail || "Failed to delete user");
   }
+}
+
+export interface UserResume {
+  id: number;
+  user_id: number;
+  filename: string;
+  file_size: number;
+  upload_date: string;
+  skills?: string[];
+  experience_years?: number;
+  education_level?: string;
+  is_active: boolean;
+}
+
+export async function getUserResume(userId: number): Promise<UserResume> {
+  const res = await fetch(`${API_URL}/admin/users/${userId}/resume`, {
+    headers: { ...authHeader() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to fetch resume" }));
+    throw new Error(err.detail || "Failed to fetch resume");
+  }
+  return res.json();
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {

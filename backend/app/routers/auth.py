@@ -31,7 +31,11 @@ async def login(payload: LoginRequest, conn = Depends(get_db)):
 
 @router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
-    return {"id": current_user["id"], "email": current_user["email"]}
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "is_admin": bool(current_user["is_admin"]),
+    }
 
 @router.get("/google/login")
 async def google_login(request: Request):

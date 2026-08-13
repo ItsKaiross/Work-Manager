@@ -11,6 +11,7 @@ from app.crud.user import (
     get_user_stats,
 )
 from app.crud.job_application import get_applications_for_user
+from app.crud.resume import get_active_resume
 from app.schemas.auth import UserResponse, UserUpdateRequest, UserCreateRequest
 from app.core.security import hash_password
 
@@ -101,6 +102,23 @@ async def delete_user_by_id(
         raise HTTPException(status_code=500, detail="Failed to delete user")
     
     return {"message": "User deleted successfully"}
+
+@router.get("/users/{user_id}/resume")
+async def get_user_resume(
+    user_id: int,
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Get a user's active resume (admin only)"""
+    user = await get_user_by_id(conn, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    resume = await get_active_resume(conn, user_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="No resume found for this user")
+
+    return resume
 
 @router.get("/stats")
 async def get_dashboard_stats(

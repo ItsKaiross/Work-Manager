@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getAuthToken, clearAuthToken } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/api";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -15,11 +16,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const token = getAuthToken();
     if (!token) {
       router.push("/");
-    } else {
-      // TODO: Verify admin status with backend
-      setChecked(true);
-      setLoading(false);
+      return;
     }
+
+    getCurrentUser()
+      .then((me) => {
+        if (!me.is_admin) {
+          router.push("/homepage");
+          return;
+        }
+        setChecked(true);
+        setLoading(false);
+      })
+      .catch(() => {
+        router.push("/");
+      });
   }, [router]);
 
   function handleLogout() {

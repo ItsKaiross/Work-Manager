@@ -34,6 +34,14 @@ export async function signup(email: string, password: string) {
     return res.json();
 }
 
+export async function getCurrentUser(): Promise<{ id: number; email: string; is_admin: boolean }> {
+    const res = await fetch(`${API_URL}/auth/me`, {
+        headers: { ...authHeader() },
+    });
+    if (!res.ok) throw new Error("Failed to fetch current user");
+    return res.json();
+}
+
 export async function getApplications(): Promise<JobApplication[]> {
     const res = await fetch(`${API_URL}/applications`, {
         headers: { ...authHeader() },
