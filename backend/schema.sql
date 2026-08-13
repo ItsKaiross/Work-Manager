@@ -13,6 +13,7 @@ CREATE TABLE `users` (
   `hashed_password` VARCHAR(255) DEFAULT NULL,
   `auth_provider` VARCHAR(50) NOT NULL,
   `is_active` TINYINT(1) DEFAULT 1,
+  `is_admin` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_users_email` (`email`)

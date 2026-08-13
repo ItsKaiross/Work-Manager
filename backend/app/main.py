@@ -1,11 +1,20 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, extract, resume
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.routers import job_applications
+from app.core.seed_admin import seed_admin_user
 
-app = FastAPI(title="Work Manager API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await seed_admin_user()
+    yield
+
+app = FastAPI(title="Work Manager API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

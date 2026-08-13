@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     google_redirect_uri: str
     frontend_url: str
 
+    admin_email: str | None = None
+    admin_password: str | None = None
+
     model_config = SettingsConfigDict(env_file=".env.local", extra="ignore")
 
 settings = Settings()

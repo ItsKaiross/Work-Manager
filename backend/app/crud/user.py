@@ -20,6 +20,26 @@ async def create_user(conn, email: str, hashed_password: str | None, auth_provid
         user_id = cur.lastrowid
     return await get_user_by_id(conn, user_id)
 
+async def get_or_create_admin_user(conn, email: str, hashed_password: str) -> dict:
+    existing = await get_user_by_email(conn, email)
+    if existing:
+        if not existing.get("is_admin"):
+            async with conn.cursor() as cur:
+                await cur.execute("UPDATE users SET is_admin = 1 WHERE id = %s", (existing["id"],))
+                await conn.commit()
+            return await get_user_by_id(conn, existing["id"])
+        return existing
+
+    async with conn.cursor(DictCursor) as cur:
+        await cur.execute(
+            "INSERT INTO users (email, hashed_password, auth_provider, is_admin) VALUES (%s, %s, 'email', 1)",
+            (email, hashed_password),
+        )
+        await conn.commit()
+        user_id = cur.lastrowid
+
+    return await get_user_by_id(conn, user_id)
+
 async def get_or_create_google_user(conn, email: str) -> dict:
     existing = await get_user_by_email(conn, email)
     if existing:
