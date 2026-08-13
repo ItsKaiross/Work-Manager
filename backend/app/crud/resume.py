@@ -337,7 +337,7 @@ async def recalculate_match_scores_for_applications(
     conn,
     resume: Dict[str, Any],
     applications: List[Dict[str, Any]],
-    concurrency: int = 5,
+    concurrency: int = 2,
 ) -> int:
     """Compute and save match scores for a resume against a list of applications.
 

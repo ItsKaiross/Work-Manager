@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from typing import Any, Optional
@@ -10,6 +11,17 @@ logger = logging.getLogger(__name__)
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
+
+# Groq's rate limits (especially on free-tier keys) are easy to hit during
+# bulk operations like recalculating match scores for many applications at
+# once. Retry a rate-limited call a few times with backoff before giving up
+# and falling back to non-AI logic, instead of failing on the first 429.
+# The wait is capped short: this runs inline in a user-facing HTTP request,
+# so honoring a large `Retry-After` (Groq can return several minutes) would
+# just hang the request - past the cap it's better to fall back immediately.
+_RATE_LIMIT_RETRIES = 3
+_RATE_LIMIT_BACKOFF_SECONDS = 2.0
+_RATE_LIMIT_MAX_WAIT_SECONDS = 5.0
 
 
 async def is_ai_available(conn) -> bool:
@@ -24,30 +36,44 @@ async def _call_groq_json_with_key(api_key: str, system_prompt: str, user_prompt
     (e.g. one per application when bulk-recalculating match scores) without
     risking concurrent use of a single MySQL connection.
     """
-    try:
-        async with httpx.AsyncClient(timeout=20) as client:
-            resp = await client.post(
-                GROQ_API_URL,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": GROQ_MODEL,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    "response_format": {"type": "json_object"},
-                    "temperature": 0.3,
-                },
-            )
-            resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
-            return json.loads(content)
-    except Exception:
-        logger.warning("Groq AI call failed, falling back to non-AI logic", exc_info=True)
-        return None
+    for attempt in range(_RATE_LIMIT_RETRIES + 1):
+        try:
+            async with httpx.AsyncClient(timeout=20) as client:
+                resp = await client.post(
+                    GROQ_API_URL,
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": GROQ_MODEL,
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        "response_format": {"type": "json_object"},
+                        "temperature": 0.3,
+                    },
+                )
+                if resp.status_code == 429 and attempt < _RATE_LIMIT_RETRIES:
+                    retry_after = resp.headers.get("retry-after")
+                    requested_delay = float(retry_after) if retry_after else _RATE_LIMIT_BACKOFF_SECONDS * (attempt + 1)
+                    if requested_delay > _RATE_LIMIT_MAX_WAIT_SECONDS:
+                        logger.warning(
+                            "Groq rate limited (429), requested wait %.1fs exceeds cap - falling back now",
+                            requested_delay,
+                        )
+                        return None
+                    logger.warning("Groq rate limited (429), retrying in %.1fs", requested_delay)
+                    await asyncio.sleep(requested_delay)
+                    continue
+                resp.raise_for_status()
+                content = resp.json()["choices"][0]["message"]["content"]
+                return json.loads(content)
+        except Exception:
+            logger.warning("Groq AI call failed, falling back to non-AI logic", exc_info=True)
+            return None
+    return None
 
 
 async def _call_groq_json(conn, system_prompt: str, user_prompt: str) -> Optional[dict]:
