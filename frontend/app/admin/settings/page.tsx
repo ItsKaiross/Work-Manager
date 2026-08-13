@@ -5,7 +5,7 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">Settings</h1>
 
       {/* Appearance Section */}

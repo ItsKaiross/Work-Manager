@@ -76,6 +76,39 @@ async def get_resume_by_id(conn, resume_id: int, user_id: int) -> Optional[Dict[
     return resume_dict
 
 
+async def get_resume_by_id_unscoped(conn, resume_id: int) -> Optional[Dict[str, Any]]:
+    """Get a resume by ID regardless of owner (admin use)"""
+    query = """
+        SELECT * FROM resumes
+        WHERE id = %s AND is_active = 1
+    """
+
+    async with conn.cursor() as cursor:
+        await cursor.execute(query, (resume_id,))
+        row = await cursor.fetchone()
+
+        if not row:
+            return None
+
+        await cursor.execute("DESCRIBE resumes")
+        columns = await cursor.fetchall()
+        column_names = [col[0] for col in columns]
+
+    resume_dict = dict(zip(column_names, row))
+    if resume_dict.get('parsed_data'):
+        try:
+            resume_dict['parsed_data'] = json.loads(resume_dict['parsed_data'])
+        except (json.JSONDecodeError, TypeError):
+            resume_dict['parsed_data'] = None
+    if resume_dict.get('skills'):
+        try:
+            resume_dict['skills'] = json.loads(resume_dict['skills'])
+        except (json.JSONDecodeError, TypeError):
+            resume_dict['skills'] = []
+
+    return resume_dict
+
+
 async def get_user_resumes(conn, user_id: int) -> List[Dict[str, Any]]:
     """Get all resumes for a user"""
     query = """

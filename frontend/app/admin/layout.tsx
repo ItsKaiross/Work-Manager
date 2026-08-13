@@ -54,9 +54,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors">
         {/* Sidebar */}
-        <aside className="w-64 min-h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col p-4 transition-colors">
+        <aside className="w-64 h-screen shrink-0 overflow-y-auto bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col p-4 transition-colors">
           <h2 className="text-xl font-bold mb-8 px-2 text-gray-800 dark:text-white">
             Admin Panel
           </h2>
@@ -87,7 +87,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 p-8">{children}</main>
+        <main className="flex-1 p-8 overflow-y-auto">{children}</main>
       </div>
   );
 }

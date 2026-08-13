@@ -130,9 +130,9 @@ export default function ApplicationDetailPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 overflow-y-auto">
         {loading && <p className="text-gray-500 dark:text-gray-400">Loading...</p>}
         {error && <p className="text-red-500">{error}</p>}
 

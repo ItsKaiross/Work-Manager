@@ -122,6 +122,25 @@ export async function getUserResume(userId: number): Promise<UserResume> {
   return res.json();
 }
 
+export async function downloadResumeFile(resumeId: number, filename: string): Promise<void> {
+  const res = await fetch(`${API_URL}/admin/resumes/${resumeId}/download`, {
+    headers: { ...authHeader() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to download resume file" }));
+    throw new Error(err.detail || "Failed to download resume file");
+  }
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   const res = await fetch(`${API_URL}/admin/stats`, {
     headers: { ...authHeader() },

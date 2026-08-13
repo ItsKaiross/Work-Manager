@@ -22,7 +22,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-56 min-h-screen bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col p-4 transition-colors">
+    <aside className="w-56 h-screen shrink-0 overflow-y-auto bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col p-4 transition-colors">
       <h2 className="text-xl font-bold mb-8 px-2">Work Manager</h2>
 
       <nav className="flex flex-col gap-1 flex-1">

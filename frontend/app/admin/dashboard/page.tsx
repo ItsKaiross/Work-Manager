@@ -43,7 +43,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">
         Admin Dashboard
       </h1>

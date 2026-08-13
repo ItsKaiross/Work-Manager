@@ -82,7 +82,7 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">User Management</h1>
         <button

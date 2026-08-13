@@ -25,10 +25,10 @@ export default function SettingsPage() {
   if (!checked) return null;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-2xl">
           <h1 className="text-2xl font-bold mb-8">Settings</h1>
 

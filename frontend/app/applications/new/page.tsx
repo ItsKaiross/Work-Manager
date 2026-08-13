@@ -52,9 +52,10 @@ export default function NewApplicationPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 p-8 max-w-2xl">
+      <main className="flex-1 p-8 overflow-y-auto">
+      <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Add Application</h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
@@ -126,6 +127,7 @@ export default function NewApplicationPage() {
             </button>
           </form>
         )}
+      </div>
       </main>
     </div>
   );

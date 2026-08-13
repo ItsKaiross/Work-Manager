@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, UserResume, getUserResume } from "@/lib/admin-api";
+import { User, UserResume, getUserResume, downloadResumeFile } from "@/lib/admin-api";
 
 interface UsersTableProps {
   users: User[];
@@ -13,6 +13,19 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
   const [resumeData, setResumeData] = useState<UserResume | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
   const [resumeError, setResumeError] = useState("");
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadResume() {
+    if (!resumeData) return;
+    setDownloading(true);
+    try {
+      await downloadResumeFile(resumeData.id, resumeData.filename);
+    } catch (err: any) {
+      setResumeError(err.message);
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function handleViewResume(user: User) {
     setResumeModalUser(user);
@@ -182,6 +195,14 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
                     </div>
                   </div>
                 )}
+
+                <button
+                  onClick={handleDownloadResume}
+                  disabled={downloading}
+                  className="mt-2 w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  {downloading ? "Downloading..." : "Download Resume File"}
+                </button>
               </div>
             )}
           </div>

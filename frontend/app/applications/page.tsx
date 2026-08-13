@@ -121,10 +121,10 @@ export default function ApplicationsPage() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">All Applications</h1>
           <div className="flex items-center gap-3">

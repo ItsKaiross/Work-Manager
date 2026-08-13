@@ -1,4 +1,7 @@
+import os
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from app.database import get_db
 from app.core.deps import get_current_admin
 from app.crud.user import (
@@ -11,7 +14,7 @@ from app.crud.user import (
     get_user_stats,
 )
 from app.crud.job_application import get_applications_for_user
-from app.crud.resume import get_active_resume
+from app.crud.resume import get_active_resume, get_resume_by_id_unscoped
 from app.schemas.auth import UserResponse, UserUpdateRequest, UserCreateRequest
 from app.core.security import hash_password
 
@@ -119,6 +122,23 @@ async def get_user_resume(
         raise HTTPException(status_code=404, detail="No resume found for this user")
 
     return resume
+
+@router.get("/resumes/{resume_id}/download")
+async def download_resume_file(
+    resume_id: int,
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Download a user's resume file (admin only)"""
+    resume = await get_resume_by_id_unscoped(conn, resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    file_path = resume["file_path"]
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="Resume file not found on server")
+
+    return FileResponse(file_path, filename=resume["filename"])
 
 @router.get("/stats")
 async def get_dashboard_stats(
