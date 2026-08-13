@@ -123,7 +123,10 @@ async def ai_enrich_resume(conn, raw_text: str) -> Optional[dict]:
         "\"education_level\" (one of \"PhD\", \"Master's\", \"Bachelor's\", \"Associate\", "
         "\"High School\", or null). No other keys or commentary."
     )
-    user_prompt = raw_text[:8000]
+    # Read the whole resume (matches the cap resumes are stored at) rather
+    # than just the first page or two - later sections (e.g. a second job
+    # history, a skills appendix) matter just as much for extraction.
+    user_prompt = raw_text[:20000]
 
     result = await _call_groq_json(conn, system_prompt, user_prompt)
     if not isinstance(result, dict):
@@ -166,7 +169,10 @@ def _match_score_prompts(
             "job_description": (job_description or "")[:4000],
             "resume_skills": resume_skills or [],
             "resume_experience_years": resume_experience,
-            "resume_summary": (resume_raw_text or "")[:3000],
+            # Full resume text (matches the storage cap), not just an excerpt -
+            # a truncated resume undercuts exactly the holistic judgment this
+            # AI path exists to provide over the keyword-substring heuristic.
+            "resume_summary": (resume_raw_text or "")[:20000],
         }
     )
     return system_prompt, user_prompt

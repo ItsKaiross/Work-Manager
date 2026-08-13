@@ -45,7 +45,9 @@ def parse_resume(file_path: str) -> Dict[str, Any]:
         'skills': skills,
         'experience_years': experience_years,
         'education_level': education_level,
-        'raw_text': text[:5000]  # Store first 5000 chars
+        # Cap generously rather than to a page or two - AI match scoring reads
+        # this whole field, and multi-page resumes shouldn't get cut off.
+        'raw_text': text[:20000]
     }
 
 
