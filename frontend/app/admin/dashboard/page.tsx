@@ -1,14 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getDashboardStats, DashboardStats } from "@/lib/admin-api";
+import { getDashboardStats, DashboardStats, getSystemHealth, SystemHealth } from "@/lib/admin-api";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [healthError, setHealthError] = useState(false);
 
   useEffect(() => {
     loadStats();
+    loadHealth();
   }, []);
 
   async function loadStats() {
@@ -20,6 +23,16 @@ export default function AdminDashboard() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadHealth() {
+    try {
+      const data = await getSystemHealth();
+      setHealth(data);
+      setHealthError(false);
+    } catch (err: any) {
+      setHealthError(true);
     }
   }
 
@@ -88,23 +101,62 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* System Info */}
+      {/* System Health */}
       <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
         <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
-          System Information
+          System Health
         </h2>
         <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <p>
-            <span className="font-semibold">Last Updated:</span>{" "}
+            <span className="font-semibold">Last Checked:</span>{" "}
             {new Date().toLocaleString()}
           </p>
-          <p>
-            <span className="font-semibold">System Status:</span>{" "}
-            <span className="text-green-500 font-semibold">● Online</span>
-          </p>
+          <HealthRow
+            label="Backend API"
+            ok={healthError ? false : health?.backend === "ok"}
+            okLabel="Online"
+            downLabel="Unreachable"
+          />
+          <HealthRow
+            label="Database"
+            ok={healthError ? false : health?.database === "ok"}
+            okLabel="Connected"
+            downLabel="Unreachable"
+          />
+          <HealthRow
+            label="AI (Groq)"
+            ok={healthError ? null : health?.ai_active ?? false}
+            okLabel="Active"
+            downLabel="Not configured"
+          />
         </div>
       </div>
     </div>
+  );
+}
+
+function HealthRow({
+  label,
+  ok,
+  okLabel,
+  downLabel,
+}: {
+  label: string;
+  ok: boolean | null;
+  okLabel: string;
+  downLabel: string;
+}) {
+  return (
+    <p>
+      <span className="font-semibold">{label}:</span>{" "}
+      {ok === null ? (
+        <span className="text-gray-400 font-semibold">● Unknown</span>
+      ) : ok ? (
+        <span className="text-green-500 font-semibold">● {okLabel}</span>
+      ) : (
+        <span className="text-red-500 font-semibold">● {downLabel}</span>
+      )}
+    </p>
   );
 }
 

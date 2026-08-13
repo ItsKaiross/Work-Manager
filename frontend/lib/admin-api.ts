@@ -193,3 +193,20 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
   return res.json();
 }
+
+export interface SystemHealth {
+  backend: "ok" | "error";
+  database: "ok" | "error";
+  ai_active: boolean;
+}
+
+export async function getSystemHealth(): Promise<SystemHealth> {
+  const res = await fetch(`${API_URL}/admin/health`, {
+    headers: { ...authHeader() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to fetch system health" }));
+    throw new Error(err.detail || "Failed to fetch system health");
+  }
+  return res.json();
+}

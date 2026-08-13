@@ -42,6 +42,14 @@ export async function getCurrentUser(): Promise<{ id: number; email: string; is_
     return res.json();
 }
 
+export async function getAiStatus(): Promise<{ ai_active: boolean }> {
+    const res = await fetch(`${API_URL}/ai/status`, {
+        headers: { ...authHeader() },
+    });
+    if (!res.ok) throw new Error("Failed to fetch AI status");
+    return res.json();
+}
+
 export async function getApplications(): Promise<JobApplication[]> {
     const res = await fetch(`${API_URL}/applications`, {
         headers: { ...authHeader() },

@@ -19,6 +19,7 @@ from app.crud.settings import get_groq_api_key, set_setting
 from app.schemas.auth import UserResponse, UserUpdateRequest, UserCreateRequest
 from app.schemas.settings import GroqApiKeyUpdate
 from app.core.security import hash_password
+from app.integrations.ai_service import is_ai_available
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -176,6 +177,28 @@ async def clear_groq_api_key(
     """Clear the Groq API key, disabling AI-assisted features (admin only)"""
     await set_setting(conn, "groq_api_key", "")
     return {"message": "Groq API key cleared"}
+
+@router.get("/health")
+async def get_system_health(
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """System health check (admin only)"""
+    database_status = "ok"
+    try:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT 1")
+            await cur.fetchone()
+    except Exception:
+        database_status = "error"
+
+    ai_active = await is_ai_available(conn)
+
+    return {
+        "backend": "ok",
+        "database": database_status,
+        "ai_active": ai_active,
+    }
 
 @router.get("/stats")
 async def get_dashboard_stats(

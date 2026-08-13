@@ -7,12 +7,14 @@ import ApplicationCard from "@/app/applications/ApplicationCard";
 import { useApplications } from "@/hooks/useApplication";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
+import { getAiStatus } from "@/lib/api";
 
 export default function Homepage() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
   const { applications, loading, error } = useApplications();
-  
+  const [aiActive, setAiActive] = useState<boolean | null>(null);
+
   useSessionMonitor();
 
   useEffect(() => {
@@ -23,6 +25,13 @@ export default function Homepage() {
       setChecked(true);
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!checked) return;
+    getAiStatus()
+      .then((data) => setAiActive(data.ai_active))
+      .catch(() => setAiActive(null));
+  }, [checked]);
 
   if (!checked) return null;
 
@@ -60,7 +69,25 @@ export default function Homepage() {
 
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            {aiActive !== null && (
+              <span
+                className={`px-2 py-1 text-xs rounded-full flex items-center gap-1 ${
+                  aiActive
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                }`}
+                title={
+                  aiActive
+                    ? "AI-assisted extraction, resume parsing, and suggestions are active"
+                    : "No AI configured - using built-in logic"
+                }
+              >
+                ✨ AI Assist: {aiActive ? "Active" : "Inactive"}
+              </span>
+            )}
+          </div>
           <Link
             href="/applications/new"
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"
