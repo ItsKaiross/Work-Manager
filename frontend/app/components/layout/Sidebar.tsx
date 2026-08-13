@@ -17,11 +17,12 @@ export default function Sidebar() {
     { href: "/applications", label: "Applications" },
     { href: "/applications/new", label: "Add Application" },
     { href: "/resume", label: "Resume & Success Rate" },
+    { href: "/settings", label: "Settings" },
     { href: "/admin/dashboard", label: "⚡ Admin Panel", admin: true },
   ];
 
   return (
-    <aside className="w-56 min-h-screen bg-gray-100 border-r border-gray-200 flex flex-col p-4">
+    <aside className="w-56 min-h-screen bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col p-4 transition-colors">
       <h2 className="text-xl font-bold mb-8 px-2">Work Manager</h2>
 
       <nav className="flex flex-col gap-1 flex-1">
@@ -32,7 +33,7 @@ export default function Sidebar() {
             className={`px-3 py-2 rounded-lg text-sm transition ${
               pathname === link.href || (link.admin && pathname.startsWith("/admin"))
                 ? "bg-blue-500 text-white"
-                : "text-gray-700 hover:bg-gray-200"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800"
             }`}
           >
             {link.label}
@@ -42,7 +43,7 @@ export default function Sidebar() {
 
       <button
         onClick={handleLogout}
-        className="px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition text-left"
+        className="px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition text-left"
       >
         Log out
       </button>

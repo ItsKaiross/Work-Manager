@@ -60,7 +60,7 @@ export default function NewApplicationPage() {
 
         <div className="flex gap-2 mb-6">
           <input
-            className="flex-1 border rounded-lg px-4 py-2"
+            className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white rounded-lg px-4 py-2"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste job posting URL"
@@ -83,27 +83,27 @@ export default function NewApplicationPage() {
             className="flex flex-col gap-3"
           >
             <input
-              className="border rounded-lg px-4 py-2"
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white rounded-lg px-4 py-2"
               value={form.position ?? ""}
               onChange={(e) => setForm({ ...form, position: e.target.value })}
               placeholder="Position"
             />
             <input
-              className="border rounded-lg px-4 py-2"
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white rounded-lg px-4 py-2"
               value={form.company ?? ""}
               onChange={(e) => setForm({ ...form, company: e.target.value })}
               placeholder="Company"
             />
             <input
-              className="border rounded-lg px-4 py-2"
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white rounded-lg px-4 py-2"
               value={form.location ?? ""}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
               placeholder="Location"
             />
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Currency</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Currency</label>
               <select
-                className="border rounded-lg px-4 py-2 w-full"
+                className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white rounded-lg px-4 py-2 w-full"
                 value={form.currency ?? "USD"}
                 onChange={(e) => setForm({ ...form, currency: e.target.value })}
               >
@@ -113,8 +113,8 @@ export default function NewApplicationPage() {
               </select>
             </div>
             {form.source && (
-              <div className="border rounded-lg px-4 py-2 bg-gray-50">
-                <label className="text-xs text-gray-500">Source</label>
+              <div className="border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-2">
+                <label className="text-xs text-gray-500 dark:text-gray-400">Source</label>
                 <p className="text-sm font-medium">{form.source}</p>
               </div>
             )}

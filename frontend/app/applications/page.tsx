@@ -128,7 +128,7 @@ export default function ApplicationsPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">All Applications</h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </span>
             <button
@@ -156,7 +156,7 @@ export default function ApplicationsPage() {
         </div>
 
         {recalculateMessage && (
-          <div className={`mb-4 p-3 rounded-lg ${recalculateMessage.includes('✅') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+          <div className={`mb-4 p-3 rounded-lg ${recalculateMessage.includes('✅') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'}`}>
             {recalculateMessage}
           </div>
         )}
@@ -180,26 +180,26 @@ export default function ApplicationsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search company, position, location..."
-                  className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-9 pr-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-500" htmlFor="dateFrom">From</label>
+                <label className="text-sm text-gray-500 dark:text-gray-400" htmlFor="dateFrom">From</label>
                 <input
                   id="dateFrom"
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <label className="text-sm text-gray-500" htmlFor="dateTo">To</label>
+                <label className="text-sm text-gray-500 dark:text-gray-400" htmlFor="dateTo">To</label>
                 <input
                   id="dateTo"
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -226,7 +226,7 @@ export default function ApplicationsPage() {
             />
 
             {filtered.length === 0 ? (
-              <p className="text-gray-500">No applications match this filter.</p>
+              <p className="text-gray-500 dark:text-gray-400">No applications match this filter.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((app) => (

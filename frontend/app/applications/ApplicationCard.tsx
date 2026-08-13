@@ -81,8 +81,8 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
   return (
     <Link
       href={`/applications/${app.id}`}
-      className={`relative block bg-white hover:bg-gray-50 border rounded-xl px-5 py-4 transition-colors shadow-sm ${
-        app.needs_follow_up ? "border-orange-300 border-l-4 border-l-orange-400" : "border-gray-200"
+      className={`relative block bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border rounded-xl px-5 py-4 transition-colors shadow-sm ${
+        app.needs_follow_up ? "border-orange-300 dark:border-orange-700 border-l-4 border-l-orange-400" : "border-gray-200 dark:border-gray-700"
       }`}
     >
       {/* Status Dot */}
@@ -99,7 +99,7 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
       )}
 
       <div className="pr-24">
-        <p className="font-semibold text-lg text-gray-900 truncate">
+        <p className="font-semibold text-lg text-gray-900 dark:text-white truncate">
           {app.position}
         </p>
         
@@ -117,16 +117,16 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
           </button>
           
           {showStatusMenu && (
-            <div 
-              className="absolute left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1 min-w-[150px]"
+            <div
+              className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1 min-w-[150px]"
               onClick={(e) => e.stopPropagation()}
             >
               {STATUS_OPTIONS.map((status) => (
                 <button
                   key={status}
                   onClick={(e) => handleStatusChange(status, e)}
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                    status === app.status ? "bg-gray-50 font-medium" : ""
+                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    status === app.status ? "bg-gray-50 dark:bg-gray-700 font-medium" : ""
                   } ${STATUS_TEXT_COLORS[status]}`}
                 >
                   {status}
@@ -136,12 +136,12 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
           )}
         </div>
         
-        <p className="text-sm text-gray-500 truncate">
+        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
           {app.company}
           {app.location ? ` · ${app.location}` : ""}
         </p>
         {app.source && (
-          <p className="text-xs text-gray-400 mt-1 truncate">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">
             Source: {app.source}
           </p>
         )}
@@ -150,13 +150,13 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
       <div className="flex justify-between items-end mt-3">
         <div className="flex items-center gap-2">
           {app.salary_range && (
-            <span className="text-xs text-gray-400">{app.salary_range}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">{app.salary_range}</span>
           )}
           {app.currency && app.salary_range && (
-            <span className="text-xs text-gray-500 font-medium">({app.currency})</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">({app.currency})</span>
           )}
         </div>
-        <span className="text-xs text-gray-400">{appliedDate}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">{appliedDate}</span>
       </div>
 
       {app.needs_follow_up && (

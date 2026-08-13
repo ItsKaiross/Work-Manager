@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getAuthToken, clearAuthToken } from "@/lib/auth";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -44,7 +43,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <ThemeProvider>
       <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
         {/* Sidebar */}
         <aside className="w-64 min-h-screen bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col p-4 transition-colors">
@@ -80,6 +78,5 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Main content */}
         <main className="flex-1 p-8">{children}</main>
       </div>
-    </ThemeProvider>
   );
 }

@@ -43,7 +43,7 @@ export default function SettingsPage() {
             onClick={() => theme === "dark" && toggleTheme()}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-gray-800">Light Mode</span>
+              <span className="font-medium text-gray-800 dark:text-white">Light Mode</span>
               <span className="text-2xl">☀️</span>
             </div>
             <div className="h-12 bg-white rounded border border-gray-200 flex items-center px-3">

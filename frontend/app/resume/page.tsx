@@ -130,15 +130,15 @@ export default function ResumePage() {
           <h1 className="text-3xl font-bold mb-8">Resume Manager</h1>
 
           {/* Upload Section */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">Upload Resume</h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               📄 Upload your resume and we'll automatically extract your skills, experience, and education!
             </p>
             
             <form onSubmit={handleUpload} className="space-y-4">
               <div>
-                <label htmlFor="resume-file" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="resume-file" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Resume File (PDF, DOC, DOCX, TXT)
                 </label>
                 <input
@@ -146,23 +146,23 @@ export default function ResumePage() {
                   type="file"
                   accept=".pdf,.doc,.docx,.txt"
                   onChange={handleFileChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {selectedFile && (
-                  <p className="mt-2 text-sm text-gray-600">
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                     Selected: {selectedFile.name} ({formatFileSize(selectedFile.size)})
                   </p>
                 )}
               </div>
 
               {uploadError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
                   {uploadError}
                 </div>
               )}
 
               {uploadSuccess && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
                   ✅ Resume uploaded and parsed successfully! Match scores calculated for all applications.
                 </div>
               )}
@@ -179,9 +179,9 @@ export default function ResumePage() {
 
           {/* Current Resume & Analysis */}
           {loading || analysisLoading ? (
-            <div className="text-center py-8 text-gray-500">Loading...</div>
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading...</div>
           ) : error ? (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
               <p className="font-semibold mb-1">Error loading resume data</p>
               <p className="text-sm">{error}</p>
               {error.includes("Cannot connect") && (
@@ -194,15 +194,15 @@ export default function ResumePage() {
             <div className="space-y-6">
               {/* Resume Selector Dropdown */}
               {allResumes.length > 1 && (
-                <div className="bg-white rounded-lg shadow-md p-4">
-                  <label htmlFor="resume-select" className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                  <label htmlFor="resume-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     📂 View Resume History ({allResumes.length} resumes)
                   </label>
                   <select
                     id="resume-select"
                     value={selectedResumeId || ''}
                     onChange={handleResumeSelect}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {allResumes.map((r) => (
                       <option key={r.id} value={r.id}>
@@ -215,7 +215,7 @@ export default function ResumePage() {
               )}
               
               {/* Current Resume Info */}
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h2 className="text-xl font-semibold">Resume Details</h2>
                   {displayedResume.is_active && (
@@ -225,23 +225,23 @@ export default function ResumePage() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     <span className="font-medium">Filename:</span> {displayedResume.filename}
                   </p>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     <span className="font-medium">Uploaded:</span>{" "}
                     {new Date(displayedResume.upload_date).toLocaleDateString()}
                   </p>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     <span className="font-medium">Size:</span> {formatFileSize(displayedResume.file_size)}
                   </p>
                   {displayedResume.experience_years && (
-                    <p className="text-gray-700">
+                    <p className="text-gray-700 dark:text-gray-300">
                       <span className="font-medium">Experience:</span> {displayedResume.experience_years} years
                     </p>
                   )}
                   {displayedResume.education_level && (
-                    <p className="text-gray-700">
+                    <p className="text-gray-700 dark:text-gray-300">
                       <span className="font-medium">Education:</span> {displayedResume.education_level}
                     </p>
                   )}
@@ -249,7 +249,7 @@ export default function ResumePage() {
 
                 {displayedResume.skills && displayedResume.skills.length > 0 && (
                   <div className="mt-4">
-                    <p className="font-medium text-gray-700 mb-2">Skills:</p>
+                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">Skills:</p>
                     <div className="flex flex-wrap gap-2">
                       {displayedResume.skills.map((skill: string, index: number) => (
                         <span
@@ -265,24 +265,24 @@ export default function ResumePage() {
               </div>
 
               {/* Success Rate Dashboard */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-bold mb-6 text-gray-800">Success Rate Analysis</h2>
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md p-6">
+                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Success Rate Analysis</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                  <div className="bg-white rounded-lg p-4 shadow">
-                    <p className="text-sm text-gray-600 mb-1">Success Rate</p>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Success Rate</p>
                     <p className={`text-3xl font-bold ${getSuccessRateColor(analysis.success_rate)}`}>
                       {analysis.success_rate.toFixed(1)}%
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {analysis.total_applications > 0 
                         ? `Based on ${analysis.total_applications} applications`
                         : "No applications yet"}
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 shadow">
-                    <p className="text-sm text-gray-600 mb-1">Average Match</p>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Average Match</p>
                     <p className="text-3xl font-bold text-blue-600">
                       {analysis.average_match_percentage.toFixed(1)}%
                     </p>
@@ -294,12 +294,12 @@ export default function ResumePage() {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 shadow">
-                    <p className="text-sm text-gray-600 mb-1">Total Applications</p>
-                    <p className="text-3xl font-bold text-gray-800">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Applications</p>
+                    <p className="text-3xl font-bold text-gray-800 dark:text-white">
                       {analysis.total_applications}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Analyzed with your resume
                     </p>
                   </div>
@@ -307,8 +307,8 @@ export default function ResumePage() {
 
                 {/* Top Skills */}
                 {analysis.top_matching_skills.length > 0 && (
-                  <div className="bg-white rounded-lg p-4 shadow mb-6">
-                    <h3 className="font-semibold text-gray-800 mb-3">Your Top Skills</h3>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow mb-6">
+                    <h3 className="font-semibold text-gray-800 dark:text-white mb-3">Your Top Skills</h3>
                     <div className="flex flex-wrap gap-2">
                       {analysis.top_matching_skills.map((skill, index) => (
                         <span
@@ -323,13 +323,13 @@ export default function ResumePage() {
                 )}
 
                 {/* Recommendations */}
-                <div className="bg-white rounded-lg p-4 shadow">
-                  <h3 className="font-semibold text-gray-800 mb-3">📊 Recommendations</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+                  <h3 className="font-semibold text-gray-800 dark:text-white mb-3">📊 Recommendations</h3>
                   <ul className="space-y-2">
                     {analysis.recommendations.map((rec, index) => (
                       <li key={index} className="flex items-start">
                         <span className="text-blue-500 mr-2">•</span>
-                        <span className="text-gray-700 text-sm">{rec}</span>
+                        <span className="text-gray-700 dark:text-gray-300 text-sm">{rec}</span>
                       </li>
                     ))}
                   </ul>
@@ -337,9 +337,9 @@ export default function ResumePage() {
               </div>
             </div>
           ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-              <p className="text-gray-700 mb-2">No resume uploaded yet</p>
-              <p className="text-sm text-gray-600">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
+              <p className="text-gray-700 dark:text-gray-300 mb-2">No resume uploaded yet</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Upload your resume above to start tracking your success rate
               </p>
             </div>

@@ -69,63 +69,63 @@ export default function Homepage() {
           </Link>
         </div>
 
-        {loading && <p className="text-gray-500">Loading...</p>}
+        {loading && <p className="text-gray-500 dark:text-gray-400">Loading...</p>}
         {error && <p className="text-red-500">{error}</p>}
 
         {!loading && !error && (
           <>
             {/* Top-level summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-              <div className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
                 <p className="text-2xl font-bold">{counts.total}</p>
-                <p className="text-sm text-gray-500">Total Applications</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Applications</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
                 <p className="text-2xl font-bold">{thisWeek}</p>
-                <p className="text-sm text-gray-500">Added This Week</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Added This Week</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
                 <p className="text-2xl font-bold">{responseRate}%</p>
-                <p className="text-sm text-gray-500">Response Rate</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Response Rate</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
                 <p className="text-2xl font-bold">{counts.offer}</p>
-                <p className="text-sm text-gray-500">Offers</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Offers</p>
               </div>
             </div>
 
             {/* Status breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
                 <p className="text-lg font-semibold">{counts.saved}</p>
-                <p className="text-xs text-gray-500">Saved</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Saved</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
                 <p className="text-lg font-semibold">{counts.applied}</p>
-                <p className="text-xs text-gray-500">Applied</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Applied</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
                 <p className="text-lg font-semibold">{counts.interviewing}</p>
-                <p className="text-xs text-gray-500">Interviewing</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Interviewing</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
                 <p className="text-lg font-semibold">{counts.offer}</p>
-                <p className="text-xs text-gray-500">Offer</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Offer</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
                 <p className="text-lg font-semibold">{counts.rejected}</p>
-                <p className="text-xs text-gray-500">Rejected</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Rejected</p>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-3 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
                 <p className="text-lg font-semibold">{counts.withdrawn}</p>
-                <p className="text-xs text-gray-500">Withdrawn</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Withdrawn</p>
               </div>
             </div>
 
             {needsFollowUp.length > 0 && (
               <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-orange-700">
+                  <h2 className="text-lg font-semibold text-orange-700 dark:text-orange-400">
                     ⏰ Needs Follow-up ({needsFollowUp.length})
                   </h2>
                 </div>
@@ -145,7 +145,7 @@ export default function Homepage() {
             </div>
 
             {recent.length === 0 ? (
-              <p className="text-gray-500">No applications yet. Add your first one!</p>
+              <p className="text-gray-500 dark:text-gray-400">No applications yet. Add your first one!</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recent.map((app) => (
