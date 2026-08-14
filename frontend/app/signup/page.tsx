@@ -39,9 +39,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <main>
-        <div className="flex flex-col w-110 rounded-lg bg-gray-100 shadow-lg p-15">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <main className="w-full max-w-md">
+        <div className="flex flex-col w-full rounded-lg bg-gray-100 shadow-lg p-6 sm:p-10">
           <h1 className="text-black self-center text-3xl font-bold">Sign up</h1>
           {error && <p className="mt-4 text-sm text-red-500 text-center">{error}</p>}
 

@@ -44,7 +44,8 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
-      <table className="w-full">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-180">
         <thead className="bg-gray-50 dark:bg-gray-700">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -127,6 +128,7 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
           ))}
         </tbody>
       </table>
+      </div>
 
       {resumeModalUser && (
         <div
@@ -134,7 +136,7 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
           onClick={() => setResumeModalUser(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-lg w-full transition-colors"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-lg w-full transition-colors max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">

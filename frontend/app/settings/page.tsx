@@ -28,7 +28,7 @@ export default function SettingsPage() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
         <div className="max-w-2xl">
           <h1 className="text-2xl font-bold mb-8">Settings</h1>
 
@@ -57,7 +57,7 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            <div className="flex items-center gap-4 mt-4">
+            <div className="flex flex-col sm:flex-row items-stretch gap-4 mt-4">
               <div
                 className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition ${
                   theme === "light"

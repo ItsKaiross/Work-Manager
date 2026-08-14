@@ -93,7 +93,7 @@ export default function SettingsPage() {
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="password"
                 value={apiKeyInput}
@@ -151,7 +151,7 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-4 mt-4">
+        <div className="flex flex-col sm:flex-row items-stretch gap-4 mt-4">
           <div
             className={`flex-1 p-4 rounded-lg border-2 cursor-pointer transition ${
               theme === "light"

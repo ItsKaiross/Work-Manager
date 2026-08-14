@@ -125,7 +125,7 @@ export default function ResumePage() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Resume Manager</h1>
 

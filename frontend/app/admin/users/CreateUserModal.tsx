@@ -23,8 +23,8 @@ export function CreateUserModal({ onClose, onCreate }: CreateUserModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full transition-colors">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full transition-colors max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Create New User</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -67,9 +67,9 @@ export default function Homepage() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-3">
+      <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold">Dashboard</h1>
             {aiActive !== null && (
               <span

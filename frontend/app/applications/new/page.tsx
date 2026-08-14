@@ -54,12 +54,12 @@ export default function NewApplicationPage() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Add Application</h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <input
             className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white rounded-lg px-4 py-2"
             value={url}

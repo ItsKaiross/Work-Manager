@@ -124,10 +124,10 @@ export default function ApplicationsPage() {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
+      <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h1 className="text-2xl font-bold">All Applications</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm text-gray-500 dark:text-gray-400">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </span>
@@ -184,7 +184,7 @@ export default function ApplicationsPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <label className="text-sm text-gray-500 dark:text-gray-400" htmlFor="dateFrom">From</label>
                 <input
                   id="dateFrom"

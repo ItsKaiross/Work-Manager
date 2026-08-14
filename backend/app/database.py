@@ -14,6 +14,13 @@ async def get_pool():
             db=settings.mysql_database,
             minsize=1,
             maxsize=10,
+            # asyncmy connections default to autocommit=False, which leaves each
+            # pooled connection in an implicit transaction. Since read paths
+            # never call commit(), a reused connection can keep serving a stale
+            # (REPEATABLE READ) snapshot indefinitely, invisible to writes made
+            # by other connections until it happens to commit for an unrelated
+            # reason. Each request here is independent, so autocommit is correct.
+            autocommit=True,
         )
     return _pool
 

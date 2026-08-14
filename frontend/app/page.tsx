@@ -36,10 +36,10 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <main>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <main className="w-full max-w-md">
         {/* Login Box */}
-        <div className="flex flex-col w-110 rounded-lg bg-gray-100 dark:bg-gray-800 shadow-lg p-15 transition-colors">
+        <div className="flex flex-col w-full rounded-lg bg-gray-100 dark:bg-gray-800 shadow-lg p-6 sm:p-10 transition-colors">
           <h1 className="text-black dark:text-white self-center text-3xl font-bold">Sign in to Work Manager</h1>
           {error && (
             <p className="mt-4 text-sm text-red-500 text-center">{error}</p>
