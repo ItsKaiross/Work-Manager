@@ -25,6 +25,8 @@ export default function ApplicationDetailPage() {
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState<any>(null);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [jobSummary, setJobSummary] = useState<{ summary: string; highlights: string[] } | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
   
   useSessionMonitor();
 
@@ -109,6 +111,23 @@ export default function ApplicationDetailPage() {
       router.push("/applications");
     } else {
       setError("Failed to delete application");
+    }
+  }
+
+  async function loadJobSummary() {
+    setLoadingSummary(true);
+    try {
+      const res = await fetch(`${API_URL}/applications/${params.id}/summary`, {
+        headers: { ...authHeader() },
+      });
+
+      if (!res.ok) throw new Error("Failed to load job summary");
+      const data = await res.json();
+      setJobSummary(data.summary);
+    } catch (err: any) {
+      console.error("Failed to load job summary:", err);
+    } finally {
+      setLoadingSummary(false);
     }
   }
 
@@ -300,6 +319,59 @@ export default function ApplicationDetailPage() {
                     <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">
                       {app.description}
                     </div>
+                  </div>
+                )}
+
+                {app.description && (
+                  <div className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-lg border border-teal-200 dark:border-teal-800 p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <svg className="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        AI Job Post Summary
+                      </h2>
+
+                      {!jobSummary && (
+                        <button
+                          onClick={loadJobSummary}
+                          disabled={loadingSummary}
+                          className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {loadingSummary ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Summarizing...
+                            </>
+                          ) : (
+                            "Summarize with AI"
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {jobSummary ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{jobSummary.summary}</p>
+                        {jobSummary.highlights && jobSummary.highlights.length > 0 && (
+                          <ul className="space-y-1.5">
+                            {jobSummary.highlights.map((item, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <span className="text-teal-500 mt-1">•</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        Get a quick AI-generated overview and key highlights of this job posting.
+                      </p>
+                    )}
                   </div>
                 )}
 

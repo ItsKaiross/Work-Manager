@@ -274,3 +274,32 @@ async def ai_generate_suggestions(
         return None
 
     return parsed
+
+
+async def ai_generate_job_summary(conn, job_description: str, position: str, company: str) -> Optional[dict]:
+    """Ask AI to summarize a job posting into a quick overview + highlights."""
+    system_prompt = (
+        "You are a career assistant that summarizes job postings for a candidate. "
+        "Respond ONLY with a JSON object with exactly these keys: "
+        "\"summary\" (a concise 2-4 sentence plain-English overview of the role), "
+        "\"highlights\" (array of 3-6 short strings, the most important responsibilities, "
+        "requirements, or benefits mentioned in the posting). No other keys or commentary."
+    )
+    user_prompt = json.dumps(
+        {
+            "position": position,
+            "company": company,
+            "job_description": (job_description or "")[:4000],
+        }
+    )
+
+    result = await _call_groq_json(conn, system_prompt, user_prompt)
+    if not isinstance(result, dict):
+        return None
+
+    summary = result.get("summary")
+    highlights = _as_str_list(result.get("highlights"))
+    if not isinstance(summary, str) or not summary.strip() or highlights is None:
+        return None
+
+    return {"summary": summary.strip(), "highlights": highlights}

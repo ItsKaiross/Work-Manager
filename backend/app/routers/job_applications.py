@@ -5,8 +5,9 @@ from app.schemas.job_application import JobApplicationCreate, JobApplicationOut
 from app.crud import job_application as crud
 from app.crud import resume as resume_crud
 from app.utils.suggestion_generator import generate_preparation_suggestions
+from app.utils.job_summarizer import generate_job_summary
 from app.utils.follow_up import compute_follow_up
-from app.integrations.ai_service import ai_generate_suggestions
+from app.integrations.ai_service import ai_generate_suggestions, ai_generate_job_summary
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -118,4 +119,34 @@ async def get_preparation_suggestions(
         "application_id": app_id,
         "suggestions": suggestions,
         "match_percentage": app.get('match_percentage')
+    }
+
+@router.get("/{app_id}/summary")
+async def get_job_summary(
+    app_id: int,
+    conn = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate an AI summary of the job posting for a specific application"""
+    app = await crud.get_application_by_id(conn, app_id, current_user["id"])
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    job_desc = app.get('description', '') or ''
+    position = app.get('position', '') or ''
+    company = app.get('company', '') or ''
+
+    # Try AI first, fall back to the heuristic bullet/sentence extractor on
+    # any failure or if AI isn't configured.
+    try:
+        summary = await ai_generate_job_summary(conn, job_description=job_desc, position=position, company=company)
+    except Exception:
+        summary = None
+
+    if not summary:
+        summary = generate_job_summary(job_desc, position, company)
+
+    return {
+        "application_id": app_id,
+        "summary": summary,
     }
