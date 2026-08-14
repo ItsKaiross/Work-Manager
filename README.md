@@ -141,30 +141,6 @@ Work Manager/
 │   ├── types/             # TypeScript types
 │   └── package.json
 └── README.md
-```
-│   ├── resume_schema.sql  # Resume tables schema
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── app/
-│   │   ├── applications/   # Job application pages
-│   │   │   ├── [id]/      # Application detail page
-│   │   │   ├── new/       # New application form
-│   │   │   ├── StatusFilter.tsx    # Filter by application status
-│   │   │   ├── CategoryFilter.tsx  # Filter by keyword-detected work category
-│   │   │   └── page.tsx   # Applications list (search + date range + filters)
-│   │   ├── resume/        # Resume management page
-│   │   ├── components/
-│   │   │   └── layout/
-│   │   │       └── Sidebar.tsx
-│   │   └── page.tsx       # Login page
-│   ├── hooks/             # Custom React hooks
-│   ├── lib/               # Utilities (incl. jobCategories.ts for category keyword matching)
-│   ├── types/             # TypeScript types
-│   └── public/
-│
-└── README.md
-```
 
 ## Installation & Setup 🚀
 
