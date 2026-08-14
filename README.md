@@ -141,6 +141,7 @@ Work Manager/
 │   ├── types/             # TypeScript types
 │   └── package.json
 └── README.md
+```
 
 ## Installation & Setup 🚀
 
