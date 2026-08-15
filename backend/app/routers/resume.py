@@ -117,6 +117,36 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=f"Failed to create resume: {str(e)}")
 
 
+async def _generate_job_keywords(conn, resume: dict) -> Optional[list]:
+    """Run AI job-keyword extraction for a resume and persist the result."""
+    raw_text = (resume.get('parsed_data') or {}).get('raw_text', '')
+    if not raw_text:
+        return None
+    try:
+        job_keywords = await ai_extract_job_keywords(conn, raw_text)
+    except Exception:
+        job_keywords = None
+    if not job_keywords:
+        return None
+    await resume_crud.update_resume(conn, resume['id'], resume['user_id'], job_keywords=job_keywords)
+    return job_keywords
+
+
+async def _backfill_job_keywords(conn, resume: dict) -> dict:
+    """Fill in AI job-search keywords for a resume uploaded before this feature existed.
+
+    Computed lazily (on read) rather than in a bulk migration script, since it
+    requires an AI round-trip per resume - cheap to do once per resume on
+    first load, cached in the DB from then on.
+    """
+    if resume.get('job_keywords'):
+        return resume
+    job_keywords = await _generate_job_keywords(conn, resume)
+    if job_keywords:
+        resume['job_keywords'] = job_keywords
+    return resume
+
+
 @router.get("/", response_model=List[dict])
 async def get_resumes(
     conn = Depends(get_db),
@@ -124,7 +154,7 @@ async def get_resumes(
 ):
     """Get all resumes for the current user"""
     resumes = await resume_crud.get_user_resumes(conn, current_user["id"])
-    return resumes
+    return [await _backfill_job_keywords(conn, r) for r in resumes]
 
 
 @router.get("/active")
@@ -138,7 +168,7 @@ async def get_active_resume(
         if not resume:
             # No resume found - return 404, this is expected when database is empty
             raise HTTPException(status_code=404, detail="No active resume found")
-        return resume
+        return await _backfill_job_keywords(conn, resume)
     except HTTPException:
         # Re-raise HTTP exceptions (like 404) - these are expected
         raise
@@ -252,6 +282,28 @@ async def delete_resume(
     if not success:
         raise HTTPException(status_code=404, detail="Resume not found")
     return {"message": "Resume deleted successfully"}
+
+
+@router.post("/{resume_id}/job-keywords")
+async def generate_job_keywords(
+    resume_id: int,
+    conn = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """(Re)generate AI job-search keyword suggestions for a resume, on demand."""
+    resume = await resume_crud.get_resume_by_id(conn, resume_id, current_user["id"])
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    job_keywords = await _generate_job_keywords(conn, resume)
+    if not job_keywords:
+        raise HTTPException(
+            status_code=502,
+            detail="Couldn't generate job suggestions right now. Make sure AI is configured and try again."
+        )
+
+    resume['job_keywords'] = job_keywords
+    return resume
 
 
 @router.post("/{resume_id}/recalculate")

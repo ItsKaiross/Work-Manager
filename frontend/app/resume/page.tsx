@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
-import { useActiveResume, useAllResumes, useResumeAnalysis, uploadResume } from "@/hooks/useResume";
+import { useActiveResume, useAllResumes, useResumeAnalysis, uploadResume, generateJobKeywords } from "@/hooks/useResume";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
 import { Resume } from "@/types/resume";
@@ -19,6 +19,9 @@ export default function ResumePage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  const [keywordsLoading, setKeywordsLoading] = useState(false);
+  const [keywordsError, setKeywordsError] = useState<string | null>(null);
   
   // Form state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -48,6 +51,23 @@ export default function ResumePage() {
   const handleResumeSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const resumeId = parseInt(e.target.value);
     setSelectedResumeId(resumeId);
+  };
+
+  const handleGenerateKeywords = async () => {
+    if (!displayedResume) return;
+
+    setKeywordsLoading(true);
+    setKeywordsError(null);
+
+    try {
+      const updated = await generateJobKeywords(displayedResume.id);
+      setDisplayedResume(updated);
+      refreshAllResumes();
+    } catch (err) {
+      setKeywordsError(err instanceof Error ? err.message : "Failed to generate job suggestions");
+    } finally {
+      setKeywordsLoading(false);
+    }
   };
 
   if (!checked) return null;
@@ -265,12 +285,33 @@ export default function ResumePage() {
               </div>
 
               {/* AI Job Suggestions */}
-              {displayedResume.job_keywords && displayedResume.job_keywords.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-semibold mb-1">💼 Job Suggestions For You</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Based on this resume, AI suggests searching for these roles. Pick a job site to search each one.
-                  </p>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                  <h2 className="text-xl font-semibold">💼 Job Suggestions For You</h2>
+                  <button
+                    type="button"
+                    onClick={handleGenerateKeywords}
+                    disabled={keywordsLoading}
+                    className="px-3 py-1 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    {keywordsLoading
+                      ? "Generating..."
+                      : displayedResume.job_keywords && displayedResume.job_keywords.length > 0
+                      ? "🔄 Regenerate"
+                      : "✨ Generate Job Suggestions"}
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Based on this resume, AI suggests searching for these roles. Pick a job site to search each one.
+                </p>
+
+                {keywordsError && (
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                    {keywordsError}
+                  </div>
+                )}
+
+                {displayedResume.job_keywords && displayedResume.job_keywords.length > 0 ? (
                   <div className="space-y-2">
                     {displayedResume.job_keywords.map((keyword: string, index: number) => (
                       <div
@@ -308,12 +349,27 @@ export default function ResumePage() {
                           >
                             Glassdoor ↗
                           </a>
+                          <a
+                            href={`https://www.onlinejobs.ph/jobseekers/jobsearch?jobkeyword=${encodeURIComponent(keyword)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Search "${keyword}" on OnlineJobs.ph`}
+                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
+                          >
+                            OnlineJobs.ph ↗
+                          </a>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  !keywordsLoading && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No job suggestions yet. Click "Generate Job Suggestions" above to have AI suggest roles based on this resume.
+                    </p>
+                  )
+                )}
+              </div>
 
               {/* Success Rate Dashboard */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md p-6">

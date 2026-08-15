@@ -241,6 +241,23 @@ export async function updateResume(
   return response.json();
 }
 
+export async function generateJobKeywords(resumeId: number): Promise<Resume> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_URL}/api/resumes/${resumeId}/job-keywords`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to generate job suggestions");
+  }
+
+  return response.json();
+}
+
 export async function deleteResume(resumeId: number): Promise<void> {
   const token = getAuthToken();
   const response = await fetch(`${API_URL}/api/resumes/${resumeId}`, {
