@@ -264,6 +264,30 @@ export default function ResumePage() {
                 )}
               </div>
 
+              {/* AI Job Search Keywords */}
+              {displayedResume.job_keywords && displayedResume.job_keywords.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-semibold mb-1">🔍 AI Job Search Keywords</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Roles and search terms AI suggests based on this resume. Click one to search for matching jobs.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {displayedResume.job_keywords.map((keyword: string, index: number) => (
+                      <a
+                        key={index}
+                        href={`https://www.indeed.com/jobs?q=${encodeURIComponent(keyword)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Search jobs for "${keyword}"`}
+                        className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm hover:bg-purple-200 dark:bg-purple-900/40 dark:text-purple-200 dark:hover:bg-purple-900/70 transition"
+                      >
+                        {keyword} ↗
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Success Rate Dashboard */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md p-6">
                 <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Success Rate Analysis</h2>

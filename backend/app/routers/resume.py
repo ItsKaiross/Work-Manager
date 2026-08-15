@@ -12,7 +12,7 @@ from app.crud import resume as resume_crud
 from app.crud import job_application as job_crud
 from app.schemas.resume import Resume, ResumeAnalysis
 from app.utils.resume_parser import parse_resume
-from app.integrations.ai_service import ai_enrich_resume
+from app.integrations.ai_service import ai_enrich_resume, ai_extract_job_keywords
 
 router = APIRouter(prefix="/api/resumes", tags=["resumes"])
 
@@ -70,7 +70,15 @@ async def upload_resume(
             parsed_data["experience_years"] = ai_data["experience_years"]
         if ai_data["education_level"]:
             parsed_data["education_level"] = ai_data["education_level"]
-    
+
+    # Ask AI for job-search keywords (job titles/search phrases) based on the
+    # resume text, so the user knows what to search job boards for. Falls
+    # back to no keywords (not blocking upload) if AI isn't configured or fails.
+    try:
+        job_keywords = await ai_extract_job_keywords(conn, parsed_data.get("raw_text", ""))
+    except Exception:
+        job_keywords = None
+
     # Create resume record
     try:
         resume = await resume_crud.create_resume(
@@ -81,6 +89,7 @@ async def upload_resume(
             file_size=file_size,
             parsed_data={'raw_text': parsed_data.get('raw_text', '')},
             skills=parsed_data.get('skills'),
+            job_keywords=job_keywords,
             experience_years=parsed_data.get('experience_years'),
             education_level=parsed_data.get('education_level')
         )
@@ -97,7 +106,8 @@ async def upload_resume(
             "parsed_info": {
                 "skills_found": len(parsed_data.get('skills', [])),
                 "experience_detected": parsed_data.get('experience_years'),
-                "education_detected": parsed_data.get('education_level')
+                "education_detected": parsed_data.get('education_level'),
+                "job_keywords_found": len(job_keywords) if job_keywords else 0
             }
         }
     except Exception as e:

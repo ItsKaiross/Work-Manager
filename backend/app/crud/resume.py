@@ -11,6 +11,7 @@ async def create_resume(
     file_size: int,
     parsed_data: Optional[Dict[str, Any]] = None,
     skills: Optional[List[str]] = None,
+    job_keywords: Optional[List[str]] = None,
     experience_years: Optional[float] = None,
     education_level: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -18,11 +19,11 @@ async def create_resume(
     query = """
         INSERT INTO resumes (
             user_id, filename, file_path, file_size, parsed_data,
-            skills, experience_years, education_level
+            skills, job_keywords, experience_years, education_level
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
-    
+
     async with conn.cursor() as cursor:
         await cursor.execute(
             query,
@@ -33,6 +34,7 @@ async def create_resume(
                 file_size,
                 json.dumps(parsed_data) if parsed_data else None,
                 json.dumps(skills) if skills else None,
+                json.dumps(job_keywords) if job_keywords else None,
                 experience_years,
                 education_level
             )
@@ -73,7 +75,12 @@ async def get_resume_by_id(conn, resume_id: int, user_id: int) -> Optional[Dict[
             resume_dict['skills'] = json.loads(resume_dict['skills'])
         except:
             resume_dict['skills'] = []
-    
+    if resume_dict.get('job_keywords'):
+        try:
+            resume_dict['job_keywords'] = json.loads(resume_dict['job_keywords'])
+        except:
+            resume_dict['job_keywords'] = []
+
     return resume_dict
 
 
@@ -106,6 +113,11 @@ async def get_resume_by_id_unscoped(conn, resume_id: int) -> Optional[Dict[str, 
             resume_dict['skills'] = json.loads(resume_dict['skills'])
         except (json.JSONDecodeError, TypeError):
             resume_dict['skills'] = []
+    if resume_dict.get('job_keywords'):
+        try:
+            resume_dict['job_keywords'] = json.loads(resume_dict['job_keywords'])
+        except (json.JSONDecodeError, TypeError):
+            resume_dict['job_keywords'] = []
 
     return resume_dict
 
@@ -140,6 +152,11 @@ async def get_user_resumes(conn, user_id: int) -> List[Dict[str, Any]]:
                 resume_dict['skills'] = json.loads(resume_dict['skills'])
             except:
                 resume_dict['skills'] = []
+        if resume_dict.get('job_keywords'):
+            try:
+                resume_dict['job_keywords'] = json.loads(resume_dict['job_keywords'])
+            except:
+                resume_dict['job_keywords'] = []
         resumes.append(resume_dict)
     
     return resumes
@@ -182,7 +199,13 @@ async def get_active_resume(conn, user_id: int) -> Optional[Dict[str, Any]]:
                 resume_dict['skills'] = json.loads(resume_dict['skills'])
             except (json.JSONDecodeError, TypeError):
                 resume_dict['skills'] = []
-        
+
+        if resume_dict.get('job_keywords') and resume_dict['job_keywords'] is not None:
+            try:
+                resume_dict['job_keywords'] = json.loads(resume_dict['job_keywords'])
+            except (json.JSONDecodeError, TypeError):
+                resume_dict['job_keywords'] = []
+
         return resume_dict
     except Exception as e:
         # Log the full error details for debugging
@@ -204,13 +227,13 @@ async def update_resume(
     **kwargs
 ) -> Optional[Dict[str, Any]]:
     """Update a resume"""
-    allowed_fields = ['filename', 'parsed_data', 'skills', 'experience_years', 'education_level', 'is_active']
+    allowed_fields = ['filename', 'parsed_data', 'skills', 'job_keywords', 'experience_years', 'education_level', 'is_active']
     updates = []
     values = []
-    
+
     for field, value in kwargs.items():
         if field in allowed_fields and value is not None:
-            if field in ['parsed_data', 'skills']:
+            if field in ['parsed_data', 'skills', 'job_keywords']:
                 value = json.dumps(value)
             updates.append(f"{field} = %s")
             values.append(value)

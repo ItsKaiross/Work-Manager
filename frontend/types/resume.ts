@@ -7,6 +7,7 @@ export interface Resume {
   upload_date: string;
   parsed_data?: Record<string, any>;
   skills?: string[];
+  job_keywords?: string[];
   experience_years?: number;
   education_level?: string;
   is_active: boolean;

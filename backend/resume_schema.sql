@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `resumes` (
   `upload_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `parsed_data` JSON,
   `skills` JSON,
+  `job_keywords` JSON,
   `experience_years` DECIMAL(4,2),
   `education_level` VARCHAR(100),
   `is_active` TINYINT(1) DEFAULT 1,

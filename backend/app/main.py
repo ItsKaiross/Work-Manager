@@ -7,11 +7,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.routers import job_applications
 from app.core.seed_admin import seed_admin_user
+from app.core.migrations import run_migrations
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await seed_admin_user()
+    await run_migrations()
     yield
 
 app = FastAPI(title="Work Manager API", lifespan=lifespan)

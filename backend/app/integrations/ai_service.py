@@ -276,6 +276,30 @@ async def ai_generate_suggestions(
     return parsed
 
 
+async def ai_extract_job_keywords(conn, raw_text: str) -> Optional[list[str]]:
+    """Ask AI for job-search keywords/titles to look for based on a resume.
+
+    Distinct from the skills list ai_enrich_resume extracts: these are search
+    terms (job titles, role variants, key specializations) suited for typing
+    into a job board's search box, not individual tools/technologies.
+    """
+    system_prompt = (
+        "You help a job seeker figure out what to search for on job boards based on "
+        "their resume. Respond ONLY with a JSON object with exactly this key: "
+        "\"keywords\" (array of 5-10 short strings, each a job title or search phrase "
+        "this candidate should search for, e.g. \"Senior Frontend Developer\", "
+        "\"React Engineer\", ordered from most to least relevant). No other keys or commentary."
+    )
+    user_prompt = raw_text[:20000]
+
+    result = await _call_groq_json(conn, system_prompt, user_prompt)
+    if not isinstance(result, dict):
+        return None
+
+    keywords = _as_str_list(result.get("keywords"))
+    return keywords[:10] if keywords else None
+
+
 async def ai_generate_job_summary(conn, job_description: str, position: str, company: str) -> Optional[dict]:
     """Ask AI to summarize a job posting into a quick overview + highlights."""
     system_prompt = (
