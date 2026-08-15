@@ -264,25 +264,52 @@ export default function ResumePage() {
                 )}
               </div>
 
-              {/* AI Job Search Keywords */}
+              {/* AI Job Suggestions */}
               {displayedResume.job_keywords && displayedResume.job_keywords.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-semibold mb-1">🔍 AI Job Search Keywords</h2>
+                  <h2 className="text-xl font-semibold mb-1">💼 Job Suggestions For You</h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Roles and search terms AI suggests based on this resume. Click one to search for matching jobs.
+                    Based on this resume, AI suggests searching for these roles. Pick a job site to search each one.
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
                     {displayedResume.job_keywords.map((keyword: string, index: number) => (
-                      <a
+                      <div
                         key={index}
-                        href={`https://www.indeed.com/jobs?q=${encodeURIComponent(keyword)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={`Search jobs for "${keyword}"`}
-                        className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm hover:bg-purple-200 dark:bg-purple-900/40 dark:text-purple-200 dark:hover:bg-purple-900/70 transition"
+                        className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
                       >
-                        {keyword} ↗
-                      </a>
+                        <span className="text-sm font-medium text-purple-900 dark:text-purple-200">
+                          {keyword}
+                        </span>
+                        <div className="flex gap-2">
+                          <a
+                            href={`https://www.indeed.com/jobs?q=${encodeURIComponent(keyword)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Search "${keyword}" on Indeed`}
+                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
+                          >
+                            Indeed ↗
+                          </a>
+                          <a
+                            href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(keyword)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Search "${keyword}" on LinkedIn`}
+                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
+                          >
+                            LinkedIn ↗
+                          </a>
+                          <a
+                            href={`https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${encodeURIComponent(keyword)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Search "${keyword}" on Glassdoor`}
+                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
+                          >
+                            Glassdoor ↗
+                          </a>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>

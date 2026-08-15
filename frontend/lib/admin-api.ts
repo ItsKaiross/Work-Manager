@@ -1,6 +1,6 @@
 import { getAuthToken } from "@/lib/auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001" || "http://localhost:8000";
 
 function authHeader(): Record<string, string> {
   const token = getAuthToken();
