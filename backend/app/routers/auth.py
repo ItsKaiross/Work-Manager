@@ -37,6 +37,11 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "is_admin": bool(current_user["is_admin"]),
     }
 
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(current_user: dict = Depends(get_current_user)):
+    """Issue a fresh access token for a still-valid one, sliding the session forward."""
+    return TokenResponse(access_token=create_access_token(current_user["id"]))
+
 @router.get("/google/login")
 async def google_login(request: Request):
     return await oauth.google.authorize_redirect(request, settings.google_redirect_uri)

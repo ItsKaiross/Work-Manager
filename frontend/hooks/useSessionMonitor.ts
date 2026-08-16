@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isTokenExpired, isSessionInactive, clearAuthToken, updateLastActivity } from "@/lib/auth";
+import {
+  isTokenExpired,
+  isSessionInactive,
+  shouldRefreshToken,
+  refreshAuthToken,
+  clearAuthToken,
+  updateLastActivity,
+} from "@/lib/auth";
 
 export function useSessionMonitor() {
   const router = useRouter();
@@ -18,11 +25,14 @@ export function useSessionMonitor() {
       document.addEventListener(event, handleActivity, { passive: true });
     });
 
-    // Check session validity every minute
+    // Check session validity every minute; silently renew the token while
+    // the user is still active instead of letting it hard-expire on them
     const intervalId = setInterval(() => {
       if (isTokenExpired() || isSessionInactive()) {
         clearAuthToken();
         router.push("/");
+      } else if (shouldRefreshToken()) {
+        refreshAuthToken();
       }
     }, 60000); // Check every 60 seconds
 
