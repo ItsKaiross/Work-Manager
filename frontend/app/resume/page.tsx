@@ -7,6 +7,18 @@ import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
 import { Resume } from "@/types/resume";
 
+const JOB_SITES: { name: string; url: (keyword: string) => string }[] = [
+  { name: "LinkedIn", url: (k) => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(k)}` },
+  { name: "Glassdoor", url: (k) => `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${encodeURIComponent(k)}` },
+  { name: "Google Jobs", url: (k) => `https://www.google.com/search?q=${encodeURIComponent(k)}&ibp=htl;jobs` },
+  { name: "ZipRecruiter", url: (k) => `https://www.ziprecruiter.com/candidate/search?search=${encodeURIComponent(k)}` },
+  { name: "Monster", url: (k) => `https://www.monster.com/jobs/search?q=${encodeURIComponent(k)}` },
+  { name: "SimplyHired", url: (k) => `https://www.simplyhired.com/search?q=${encodeURIComponent(k)}` },
+  { name: "CareerBuilder", url: (k) => `https://www.careerbuilder.com/jobs?keywords=${encodeURIComponent(k)}` },
+  { name: "Dice", url: (k) => `https://www.dice.com/jobs?q=${encodeURIComponent(k)}` },
+  { name: "OnlineJobs.ph", url: (k) => `https://www.onlinejobs.ph/jobseekers/jobsearch?jobkeyword=${encodeURIComponent(k)}` },
+];
+
 export default function ResumePage() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
@@ -316,49 +328,34 @@ export default function ResumePage() {
                     {displayedResume.job_keywords.map((keyword: string, index: number) => (
                       <div
                         key={index}
-                        className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
+                        className="flex items-center justify-between gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
                       >
-                        <span className="text-sm font-medium text-purple-900 dark:text-purple-200">
+                        <span className="text-sm font-medium text-purple-900 dark:text-purple-200 truncate">
                           {keyword}
                         </span>
-                        <div className="flex gap-2">
-                          <a
-                            href={`https://www.indeed.com/jobs?q=${encodeURIComponent(keyword)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Search "${keyword}" on Indeed`}
-                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
+                        <details className="relative shrink-0 group">
+                          <summary
+                            className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none px-3 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs font-medium hover:bg-purple-100 dark:hover:bg-purple-800/40 transition flex items-center gap-1"
                           >
-                            Indeed ↗
-                          </a>
-                          <a
-                            href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(keyword)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Search "${keyword}" on LinkedIn`}
-                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
-                          >
-                            LinkedIn ↗
-                          </a>
-                          <a
-                            href={`https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${encodeURIComponent(keyword)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Search "${keyword}" on Glassdoor`}
-                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
-                          >
-                            Glassdoor ↗
-                          </a>
-                          <a
-                            href={`https://www.onlinejobs.ph/jobseekers/jobsearch?jobkeyword=${encodeURIComponent(keyword)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={`Search "${keyword}" on OnlineJobs.ph`}
-                            className="px-2 py-1 bg-white dark:bg-gray-700 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded text-xs hover:bg-purple-100 dark:hover:bg-purple-800/40 transition"
-                          >
-                            OnlineJobs.ph ↗
-                          </a>
-                        </div>
+                            Search on
+                            <span className="transition-transform group-open:rotate-180">▾</span>
+                          </summary>
+                          <div className="absolute right-0 z-20 mt-1 w-44 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 max-h-64 overflow-y-auto">
+                            {JOB_SITES.map((site) => (
+                              <a
+                                key={site.name}
+                                href={site.url(keyword)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`Search "${keyword}" on ${site.name}`}
+                                className="flex items-center justify-between px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition"
+                              >
+                                {site.name}
+                                <span className="text-gray-400">↗</span>
+                              </a>
+                            ))}
+                          </div>
+                        </details>
                       </div>
                     ))}
                   </div>
