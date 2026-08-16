@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/app/components/layout/Sidebar";
 import ApplicationCard from "@/app/applications/ApplicationCard";
+import ActivityHeatmap from "@/app/homepage/ActivityHeatmap";
+import ApplicationFunnel from "@/app/homepage/ApplicationFunnel";
+import SourceBreakdown from "@/app/homepage/SourceBreakdown";
 import { useApplications } from "@/hooks/useApplication";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
@@ -63,6 +66,24 @@ export default function Homepage() {
     (a) => new Date(a.created_at) >= oneWeekAgo
   ).length;
 
+  // Average days between applying and the first status change away from "applied"
+  const respondedApps = applications.filter(
+    (a) =>
+      (a.status === "interviewing" || a.status === "offer" || a.status === "rejected") &&
+      a.applied_date &&
+      a.updated_at
+  );
+  const avgResponseDays =
+    respondedApps.length > 0
+      ? Math.round(
+          respondedApps.reduce((sum, a) => {
+            const applied = new Date(a.applied_date!).getTime();
+            const updated = new Date(a.updated_at!).getTime();
+            return sum + Math.max(0, (updated - applied) / (24 * 60 * 60 * 1000));
+          }, 0) / respondedApps.length
+        )
+      : null;
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -102,7 +123,7 @@ export default function Homepage() {
         {!loading && !error && (
           <>
             {/* Top-level summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
                 <p className="text-2xl font-bold">{counts.total}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Applications</p>
@@ -118,6 +139,10 @@ export default function Homepage() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
                 <p className="text-2xl font-bold">{counts.offer}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Offers</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
+                <p className="text-2xl font-bold">{avgResponseDays !== null ? `${avgResponseDays}d` : "—"}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Avg. Response Time</p>
               </div>
             </div>
 
@@ -147,6 +172,15 @@ export default function Homepage() {
                 <p className="text-lg font-semibold">{counts.withdrawn}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Withdrawn</p>
               </div>
+            </div>
+
+            <div className="mb-8">
+              <ActivityHeatmap applications={applications} />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+              <ApplicationFunnel applications={applications} />
+              <SourceBreakdown applications={applications} />
             </div>
 
             {needsFollowUp.length > 0 && (

@@ -26,7 +26,13 @@ export default function ApplicationsPage() {
   const [dateTo, setDateTo] = useState("");
   const [recalculating, setRecalculating] = useState(false);
   const [recalculateMessage, setRecalculateMessage] = useState<string | null>(null);
-  
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   useSessionMonitor();
 
   useEffect(() => {
@@ -90,6 +96,51 @@ export default function ApplicationsPage() {
     }
   };
 
+  function toggleSelectMode() {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelected(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleBulkDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+
+    const token = getAuthToken();
+    const results = await Promise.allSettled(
+      Array.from(selectedIds).map((id) =>
+        fetch(`${API_URL}/applications/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((res) => {
+          if (!res.ok) throw new Error(`Failed to delete application ${id}`);
+        })
+      )
+    );
+
+    const failed = results.filter((r) => r.status === "rejected").length;
+    setDeleting(false);
+    setShowDeleteConfirm(false);
+
+    if (failed > 0) {
+      setDeleteError(`${failed} application${failed === 1 ? "" : "s"} could not be deleted.`);
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    }
+
+    await refresh();
+  }
+
   if (!checked) return null;
 
   const filtered = applications.filter((a) => {
@@ -152,8 +203,56 @@ export default function ApplicationsPage() {
               </svg>
               {loading ? "Refreshing..." : "Refresh"}
             </button>
+            <button
+              onClick={toggleSelectMode}
+              className={`px-3 py-1.5 text-sm rounded-lg transition flex items-center gap-1 ${
+                selectMode
+                  ? "bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }`}
+            >
+              {selectMode ? "Cancel" : "Select"}
+            </button>
           </div>
         </div>
+
+        {selectMode && (
+          <div className="flex flex-wrap items-center gap-3 mb-4 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <span className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set(filtered.map((a) => a.id)))}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Select all ({filtered.length})
+            </button>
+            {selectedIds.size > 0 && (
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={selectedIds.size === 0}
+              className="ml-auto px-3 py-1.5 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete Selected
+            </button>
+          </div>
+        )}
+
+        {deleteError && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+            {deleteError}
+          </div>
+        )}
 
         {recalculateMessage && (
           <div className={`mb-4 p-3 rounded-lg ${recalculateMessage.includes('✅') ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'}`}>
@@ -230,13 +329,54 @@ export default function ApplicationsPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((app) => (
-                  <ApplicationCard key={app.id} app={app} />
+                  <ApplicationCard
+                    key={app.id}
+                    app={app}
+                    selectable={selectMode}
+                    selected={selectedIds.has(app.id)}
+                    onToggleSelect={toggleSelected}
+                  />
                 ))}
               </div>
             )}
           </>
         )}
       </main>
+
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => !deleting && setShowDeleteConfirm(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-sm w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-2">
+              Delete {selectedIds.size} application{selectedIds.size === 1 ? "" : "s"}?
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white hover:bg-red-600 transition disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

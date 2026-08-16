@@ -36,7 +36,19 @@ const STATUS_TEXT_COLORS: Record<string, string> = {
   withdrawn: "text-gray-500",
 };
 
-export default function ApplicationCard({ app: initialApp }: { app: JobApplication }) {
+interface ApplicationCardProps {
+  app: JobApplication;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: number) => void;
+}
+
+export default function ApplicationCard({
+  app: initialApp,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: ApplicationCardProps) {
   const [app, setApp] = useState(initialApp);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -88,19 +100,37 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
     return "bg-red-100 text-red-800 border-red-300";
   };
 
-  return (
-    <Link
-      href={`/applications/${app.id}`}
-      className={`relative block bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border rounded-xl px-5 py-4 transition-colors shadow-sm ${
-        app.needs_follow_up ? "border-orange-300 dark:border-orange-700 border-l-4 border-l-orange-400" : "border-gray-200 dark:border-gray-700"
-      }`}
-    >
+  const cardContent = (
+    <>
+      {selectable && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleSelect?.(app.id);
+          }}
+          aria-label={selected ? "Deselect application" : "Select application"}
+          className={`absolute top-3 left-3 z-10 w-5 h-5 rounded border-2 flex items-center justify-center transition ${
+            selected
+              ? "bg-blue-500 border-blue-500"
+              : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+          }`}
+        >
+          {selected && (
+            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </button>
+      )}
+
       {/* Status Dot */}
       <span
         className={`absolute top-4 right-4 w-3 h-3 rounded-full ${STATUS_COLORS[app.status] || "bg-gray-300"}`}
         title={app.status}
       />
-      
+
       {/* Match Percentage Badge - Positioned higher to avoid overlap */}
       {app.match_percentage !== null && app.match_percentage !== undefined && (
         <div className={`absolute top-2 right-12 px-3 py-1 rounded-full text-xs font-bold border-2 ${getMatchColor(app.match_percentage)} shadow-sm`}>
@@ -108,7 +138,7 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
         </div>
       )}
 
-      <div className="pr-24">
+      <div className={`pr-24 ${selectable ? "pl-7" : ""}`}>
         <p className="font-semibold text-lg text-gray-900 dark:text-white truncate">
           {app.position}
         </p>
@@ -187,6 +217,32 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
           ⏰ No update in {app.days_since_update} day{app.days_since_update === 1 ? "" : "s"} — follow up?
         </p>
       )}
+    </>
+  );
+
+  const borderClass = selected
+    ? "border-blue-400 dark:border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900"
+    : app.needs_follow_up
+    ? "border-orange-300 dark:border-orange-700 border-l-4 border-l-orange-400"
+    : "border-gray-200 dark:border-gray-700";
+
+  if (selectable) {
+    return (
+      <div
+        onClick={() => onToggleSelect?.(app.id)}
+        className={`relative block cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border rounded-xl px-5 py-4 transition-colors shadow-sm ${borderClass}`}
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/applications/${app.id}`}
+      className={`relative block bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border rounded-xl px-5 py-4 transition-colors shadow-sm ${borderClass}`}
+    >
+      {cardContent}
     </Link>
   );
 }
