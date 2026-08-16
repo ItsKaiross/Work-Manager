@@ -8,6 +8,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const STATUS_OPTIONS = ["saved", "applied", "interviewing", "offer", "rejected", "withdrawn"];
 
+// Forward progression only — rejected/withdrawn are terminal exits, not pipeline steps,
+// so they're reachable via the dropdown but not the quick-advance arrow.
+const PIPELINE_ORDER = ["saved", "applied", "interviewing", "offer"];
+
+function getNextStatus(current: string): string | null {
+  const idx = PIPELINE_ORDER.indexOf(current);
+  if (idx === -1 || idx === PIPELINE_ORDER.length - 1) return null;
+  return PIPELINE_ORDER[idx + 1];
+}
+
 const STATUS_COLORS: Record<string, string> = {
   saved: "bg-gray-400",
   applied: "bg-blue-500",
@@ -103,8 +113,8 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
           {app.position}
         </p>
         
-        {/* Status with dropdown */}
-        <div className="relative inline-block">
+        {/* Status with dropdown + quick-advance arrow */}
+        <div className="relative inline-flex items-center gap-1.5">
           <button
             onClick={toggleStatusMenu}
             disabled={updating}
@@ -115,7 +125,20 @@ export default function ApplicationCard({ app: initialApp }: { app: JobApplicati
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          
+
+          {getNextStatus(app.status) && (
+            <button
+              onClick={(e) => handleStatusChange(getNextStatus(app.status)!, e)}
+              disabled={updating}
+              title={`Mark as ${getNextStatus(app.status)}`}
+              className="p-0.5 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
           {showStatusMenu && (
             <div
               className="absolute left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1 min-w-[150px]"
