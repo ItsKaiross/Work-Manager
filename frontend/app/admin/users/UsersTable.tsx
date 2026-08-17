@@ -259,11 +259,11 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
           onClick={() => setActivityModalUser(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-lg w-full transition-colors max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-5 max-w-md w-full transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-base font-semibold text-gray-800 dark:text-white truncate pr-2">
                 Activity — {activityModalUser.email}
               </h3>
               <button
@@ -280,69 +280,60 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
             {activityError && <p className="text-red-500 text-sm">{activityError}</p>}
 
             {activityData && (
-              <div className="space-y-4 text-sm">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg px-3 py-2">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
                       {activityData.total_applications}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Applications</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Total Applications</p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg px-3 py-2">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight truncate">
                       {activityData.last_activity
-                        ? new Date(activityData.last_activity).toLocaleString()
+                        ? new Date(activityData.last_activity).toLocaleDateString()
                         : "No activity yet"}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Last Activity</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Last Activity</p>
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">
                   Account created {new Date(activityData.account_created).toLocaleDateString()}
                 </p>
 
                 {Object.keys(activityData.status_counts).length > 0 && (
-                  <div>
-                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Status breakdown:
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {Object.entries(activityData.status_counts).map(([status, count]) => (
-                        <span
-                          key={status}
-                          className={`px-2 py-0.5 rounded-full text-xs ${
-                            STATUS_COLORS[status] || "bg-gray-100 dark:bg-gray-700 text-gray-700"
-                          }`}
-                        >
-                          {status}: {count}
-                        </span>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(activityData.status_counts).map(([status, count]) => (
+                      <span
+                        key={status}
+                        className={`px-1.5 py-0.5 rounded-full text-[11px] ${
+                          STATUS_COLORS[status] || "bg-gray-100 dark:bg-gray-700 text-gray-700"
+                        }`}
+                      >
+                        {status}: {count}
+                      </span>
+                    ))}
                   </div>
                 )}
 
                 {activityData.recent_applications.length > 0 ? (
                   <div>
-                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Recent applications:
+                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-1 text-xs">
+                      Recent applications
                     </p>
                     <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden">
                       {activityData.recent_applications.map((app) => (
                         <div
                           key={app.id}
-                          className="flex items-center justify-between gap-2 px-3 py-2"
+                          className="flex items-center gap-2 px-2.5 py-1.5"
                         >
-                          <div className="min-w-0">
-                            <p className="text-gray-900 dark:text-gray-100 truncate">
-                              {app.position}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {app.company} · {new Date(app.updated_at || app.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
+                          <span className="min-w-0 flex-1 truncate text-xs text-gray-900 dark:text-gray-100">
+                            <span className="font-medium">{app.position}</span>
+                            <span className="text-gray-400 dark:text-gray-500"> · {app.company}</span>
+                          </span>
                           <span
-                            className={`shrink-0 px-2 py-0.5 rounded-full text-xs ${
+                            className={`shrink-0 px-1.5 py-0.5 rounded-full text-[11px] ${
                               STATUS_COLORS[app.status] || "bg-gray-100 dark:bg-gray-700 text-gray-700"
                             }`}
                           >

@@ -136,7 +136,7 @@ async def get_user_activity(
         applications,
         key=lambda a: a.get("updated_at") or a.get("created_at"),
         reverse=True,
-    )[:10]
+    )[:5]
 
     return {
         "user_id": user_id,
