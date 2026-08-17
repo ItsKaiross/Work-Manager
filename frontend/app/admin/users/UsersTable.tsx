@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { User, UserResume, getUserResume, downloadResumeFile } from "@/lib/admin-api";
+import {
+  User,
+  UserResume,
+  UserActivity,
+  getUserResume,
+  downloadResumeFile,
+  getUserActivity,
+} from "@/lib/admin-api";
 
 interface UsersTableProps {
   users: User[];
@@ -8,12 +15,26 @@ interface UsersTableProps {
   onDelete: (userId: number) => void;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  saved: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
+  applied: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400",
+  interviewing: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400",
+  offer: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400",
+  rejected: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400",
+  withdrawn: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400",
+};
+
 export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: UsersTableProps) {
   const [resumeModalUser, setResumeModalUser] = useState<User | null>(null);
   const [resumeData, setResumeData] = useState<UserResume | null>(null);
   const [resumeLoading, setResumeLoading] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const [downloading, setDownloading] = useState(false);
+
+  const [activityModalUser, setActivityModalUser] = useState<User | null>(null);
+  const [activityData, setActivityData] = useState<UserActivity | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState("");
 
   async function handleDownloadResume() {
     if (!resumeData) return;
@@ -39,6 +60,21 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
       setResumeError(err.message);
     } finally {
       setResumeLoading(false);
+    }
+  }
+
+  async function handleViewActivity(user: User) {
+    setActivityModalUser(user);
+    setActivityData(null);
+    setActivityError("");
+    setActivityLoading(true);
+    try {
+      const data = await getUserActivity(user.id);
+      setActivityData(data);
+    } catch (err: any) {
+      setActivityError(err.message);
+    } finally {
+      setActivityLoading(false);
     }
   }
 
@@ -111,6 +147,12 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
                 {new Date(user.created_at).toLocaleDateString()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <button
+                  onClick={() => handleViewActivity(user)}
+                  className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-4"
+                >
+                  Activity
+                </button>
                 <button
                   onClick={() => handleViewResume(user)}
                   className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
@@ -205,6 +247,116 @@ export function UsersTable({ users, onToggleActive, onToggleAdmin, onDelete }: U
                 >
                   {downloading ? "Downloading..." : "Download Resume File"}
                 </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activityModalUser && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setActivityModalUser(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-lg w-full transition-colors max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                Activity — {activityModalUser.email}
+              </h3>
+              <button
+                onClick={() => setActivityModalUser(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            {activityLoading && (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
+            )}
+            {activityError && <p className="text-red-500 text-sm">{activityError}</p>}
+
+            {activityData && (
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {activityData.total_applications}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Applications</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {activityData.last_activity
+                        ? new Date(activityData.last_activity).toLocaleString()
+                        : "No activity yet"}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Last Activity</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Account created {new Date(activityData.account_created).toLocaleDateString()}
+                </p>
+
+                {Object.keys(activityData.status_counts).length > 0 && (
+                  <div>
+                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Status breakdown:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(activityData.status_counts).map(([status, count]) => (
+                        <span
+                          key={status}
+                          className={`px-2 py-0.5 rounded-full text-xs ${
+                            STATUS_COLORS[status] || "bg-gray-100 dark:bg-gray-700 text-gray-700"
+                          }`}
+                        >
+                          {status}: {count}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activityData.recent_applications.length > 0 ? (
+                  <div>
+                    <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Recent applications:
+                    </p>
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700 border border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden">
+                      {activityData.recent_applications.map((app) => (
+                        <div
+                          key={app.id}
+                          className="flex items-center justify-between gap-2 px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-gray-900 dark:text-gray-100 truncate">
+                              {app.position}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {app.company} · {new Date(app.updated_at || app.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 px-2 py-0.5 rounded-full text-xs ${
+                              STATUS_COLORS[app.status] || "bg-gray-100 dark:bg-gray-700 text-gray-700"
+                            }`}
+                          >
+                            {app.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    This user hasn&apos;t tracked any applications yet.
+                  </p>
+                )}
               </div>
             )}
           </div>

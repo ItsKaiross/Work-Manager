@@ -141,6 +141,35 @@ export async function downloadResumeFile(resumeId: number, filename: string): Pr
   window.URL.revokeObjectURL(url);
 }
 
+export interface UserActivityApplication {
+  id: number;
+  company: string;
+  position: string;
+  status: string;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface UserActivity {
+  user_id: number;
+  total_applications: number;
+  status_counts: Record<string, number>;
+  last_activity: string | null;
+  account_created: string;
+  recent_applications: UserActivityApplication[];
+}
+
+export async function getUserActivity(userId: number): Promise<UserActivity> {
+  const res = await fetch(`${API_URL}/admin/users/${userId}/activity`, {
+    headers: { ...authHeader() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to fetch user activity" }));
+    throw new Error(err.detail || "Failed to fetch user activity");
+  }
+  return res.json();
+}
+
 export interface AiSettings {
   groq_api_key_set: boolean;
   groq_api_key_preview: string | null;

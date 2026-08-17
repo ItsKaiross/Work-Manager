@@ -109,6 +109,54 @@ async def delete_user_by_id(
     
     return {"message": "User deleted successfully"}
 
+@router.get("/users/{user_id}/activity")
+async def get_user_activity(
+    user_id: int,
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Get a user's job-search activity summary (admin only)"""
+    user = await get_user_by_id(conn, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    applications = await get_applications_for_user(conn, user_id)
+
+    status_counts: dict[str, int] = {}
+    last_activity = None
+    for app in applications:
+        status = app.get("status") or "saved"
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+        candidate = app.get("updated_at") or app.get("created_at")
+        if candidate and (last_activity is None or candidate > last_activity):
+            last_activity = candidate
+
+    recent = sorted(
+        applications,
+        key=lambda a: a.get("updated_at") or a.get("created_at"),
+        reverse=True,
+    )[:10]
+
+    return {
+        "user_id": user_id,
+        "total_applications": len(applications),
+        "status_counts": status_counts,
+        "last_activity": last_activity,
+        "account_created": user["created_at"],
+        "recent_applications": [
+            {
+                "id": a["id"],
+                "company": a["company"],
+                "position": a["position"],
+                "status": a["status"],
+                "created_at": a["created_at"],
+                "updated_at": a.get("updated_at"),
+            }
+            for a in recent
+        ],
+    }
+
 @router.get("/users/{user_id}/resume")
 async def get_user_resume(
     user_id: int,
