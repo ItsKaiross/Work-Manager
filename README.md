@@ -4,9 +4,25 @@ A comprehensive job application tracking system with AI-powered resume matching,
 
 ## Features ✨
 
+### 📊 Enhanced Dashboard Analytics
+- **Activity Heatmap** - GitHub-style contribution chart showing application activity over the past year
+  - Visual representation of daily application submissions
+  - Color-coded intensity levels
+  - Interactive tooltips with daily counts
+  - Month and day labels for easy navigation
+- **Application Pipeline Funnel** - Visual progress tracking through application stages
+  - Bar chart showing distribution across Saved, Applied, Interviewing, and Offer stages
+  - Exit tracking for Rejected and Withdrawn applications
+  - Percentage-based visualization
+- **Source Breakdown** - Analytics on where your applications come from
+  - Top 6 sources ranked by application count
+  - "Other" category for remaining sources
+  - Visual bars showing relative distribution
+
 ### 📋 Job Application Management
 - Track all your job applications in one place
 - Status tracking: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn
+- **Quick-advance arrow** - Fast-forward applications through pipeline stages with a single click
 - Store job details: company, position, location, salary, job description, notes
 - Filter applications by status and category
 - Search applications by company, position, or location
@@ -14,6 +30,7 @@ A comprehensive job application tracking system with AI-powered resume matching,
 - Auto-categorization by work type (Video Editor, Full Stack, Frontend, Backend, Mobile, Data, DevOps, Design, Product, QA)
 - Auto-refresh every 30 seconds
 - Multi-currency support (USD, EUR, GBP, JPY, CNY, INR, AUD, CAD, SGD, PHP, MYR, THB, VND, IDR)
+- **AI-powered job summary generation** - Automatic summarization of lengthy job descriptions
 
 ### ⏰ Follow-up Reminders
 - Automatic staleness detection — no manual dates to maintain
@@ -29,6 +46,10 @@ A comprehensive job application tracking system with AI-powered resume matching,
 - Support for multiple resumes
 - Active resume selection
 - Resume performance analysis with AI
+- **AI Job Keyword Generation** - Get personalized job search keywords based on your resume
+  - Smart keyword suggestions for targeted job searches
+  - One-click generation and regeneration
+  - Automatic backfill for existing resumes
 
 ### 🎯 AI-Powered Resume Matching
 - **Automatic match score calculation** when adding new applications
@@ -54,16 +75,23 @@ A comprehensive job application tracking system with AI-powered resume matching,
   - Total applications across all users
   - Quick action buttons
   - System status display
+  - System health monitoring with AI service status
 - **User Management**: Full CRUD operations for user accounts
   - Create, update, and delete users
   - Toggle user active/inactive status
   - Grant or revoke admin privileges
   - View user details and activity timestamps
+  - **User Activity Insights** - Detailed view of user job-search activity
+    - Total applications and status breakdown
+    - Recent application history
+    - Last activity tracking
+    - Resume download capability
   - Prevent self-deletion and self-privilege removal
 - **Settings**: System configuration and customization
   - Dark/Light mode toggle with persistence
   - System information display
   - Admin actions panel
+  - AI service configuration and monitoring
 
 ### 🎨 Theme Support
 - **Dark Mode**: Full dark theme support across the entire application
@@ -75,6 +103,12 @@ A comprehensive job application tracking system with AI-powered resume matching,
 ### 🔒 Authentication & Security
 - **Email/Password Login**: Traditional authentication with JWT
 - **Google OAuth**: Quick sign-in with Google account
+- **Automatic Token Refresh**: Seamless session renewal while user is active
+- **Session Monitoring**: Smart activity detection to prevent unexpected logouts
+  - Tracks user interactions (mouse, keyboard, scroll, touch)
+  - Auto-refreshes tokens before expiration
+  - Graceful session expiry handling
+  - Inactivity timeout protection
 - **Role-Based Access Control**: Admin and user roles with appropriate permissions
 - **Protected Routes**: Admin panel requires admin privileges
 - **Secure JWT Tokens**: Token-based authentication for all API calls
@@ -413,6 +447,6 @@ For issues, questions, or suggestions:
 
 **Built with ❤️ for job seekers everywhere**
 
-Last Updated: August 2026
+Last Updated: August 18, 2026
 
 Happy job hunting! 🎯
