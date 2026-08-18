@@ -30,6 +30,7 @@ def extract_job_source(url: str) -> str:
         'greenhouse.io': 'Greenhouse',
         'lever.co': 'Lever',
         'workable.com': 'Workable',
+        'csod.com': 'Cornerstone OnDemand',
         'onlinejobs.ph': 'OnlineJobs.ph',
         'jobstreet.com': 'JobStreet',
         'seek.com': 'SEEK',
@@ -75,6 +76,17 @@ def _clean_description(raw: str | None) -> str | None:
     text = BeautifulSoup(raw, "lxml").get_text(separator="\n").strip()
     return text or None
 
+def _normalize_keys(obj):
+    """Recursively lowercase dict keys. Some ATS platforms (e.g. Cornerstone
+    OnDemand) emit JobPosting JSON-LD with PascalCase property names, at every
+    nesting level, instead of the schema.org-standard camelCase - so every
+    lookup below reads through this rather than trusting spec-correct casing."""
+    if isinstance(obj, dict):
+        return {k.lower(): _normalize_keys(v) for k, v in obj.items() if isinstance(k, str)}
+    if isinstance(obj, list):
+        return [_normalize_keys(v) for v in obj]
+    return obj
+
 def _extract_company_name(hiring_org) -> str | None:
     if not hiring_org:
         return None
@@ -92,36 +104,50 @@ def extract_structured_data(html: str, url: str) -> dict | None:
 
     for item in data.get("json-ld", []):
         if item.get("@type") == "JobPosting":
-            description = _clean_description(item.get("description"))
-            company = _extract_company_name(item.get("hiringOrganization"))
-            
+            fields = _normalize_keys(item)
+
+            description = _clean_description(fields.get("description"))
+            company = _extract_company_name(fields.get("hiringorganization"))
+
             # If company not found in structured data, try extracting from description
             if not company and description:
                 company = _extract_company_from_description(description)
-            
+
             return {
-                "position": item.get("title"),
+                "position": fields.get("title"),
                 "company": company,
-                "location": _extract_location(item.get("jobLocation")),
-                "salary_range": _extract_salary(item.get("baseSalary")),
+                "location": _extract_location(fields.get("joblocation")),
+                "salary_range": _extract_salary(fields.get("basesalary")),
                 "description": description,
             }
     return None
 
 def _extract_location(job_location) -> str | None:
-    if not job_location:
+    if not job_location or not isinstance(job_location, (dict, list)):
         return None
     if isinstance(job_location, list):
-        job_location = job_location[0]
-    address = job_location.get("address", {})
-    parts = [address.get("addressLocality"), address.get("addressRegion"), address.get("addressCountry")]
-    return ", ".join(p for p in parts if p)
+        job_location = job_location[0] if job_location else {}
+    address = job_location.get("address", {}) if isinstance(job_location, dict) else {}
+    if isinstance(address, list):
+        address = address[0] if address else {}
+    if not isinstance(address, dict):
+        return None
+
+    # addressCountry may be a plain string or a nested schema.org Country object
+    country = address.get("addresscountry")
+    if isinstance(country, dict):
+        country = country.get("name")
+
+    parts = [address.get("addresslocality"), address.get("addressregion"), country]
+    return ", ".join(p for p in parts if p) or None
 
 def _extract_salary(base_salary) -> str | None:
-    if not base_salary:
+    if not base_salary or not isinstance(base_salary, dict):
         return None
     value = base_salary.get("value", {})
-    min_v, max_v = value.get("minValue"), value.get("maxValue")
+    if not isinstance(value, dict):
+        return None
+    min_v, max_v = value.get("minvalue"), value.get("maxvalue")
     currency = base_salary.get("currency", "")
     if min_v and max_v:
         return f"{currency} {min_v}–{max_v}"
