@@ -31,6 +31,7 @@ def extract_job_source(url: str) -> str:
         'lever.co': 'Lever',
         'workable.com': 'Workable',
         'csod.com': 'Cornerstone OnDemand',
+        'google.com': 'Google Jobs',
         'onlinejobs.ph': 'OnlineJobs.ph',
         'jobstreet.com': 'JobStreet',
         'seek.com': 'SEEK',
