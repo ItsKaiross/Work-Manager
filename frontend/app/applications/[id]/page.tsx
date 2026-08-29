@@ -3,8 +3,17 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import { JobApplication } from "@/types/job_application";
+import { CoverLetter, CoverLetterTone } from "@/types/cover_letter";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
+import {
+  getActiveResume,
+  getAiStatus,
+  getCoverLetters,
+  getCoverLetter,
+  generateCoverLetter,
+  updateCoverLetter,
+} from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -27,7 +36,21 @@ export default function ApplicationDetailPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [jobSummary, setJobSummary] = useState<{ summary: string; highlights: string[] } | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
-  
+
+  const [activeResume, setActiveResume] = useState<{ id: number; filename: string } | null>(null);
+  const [aiActive, setAiActive] = useState<boolean | null>(null);
+  const [coverLetter, setCoverLetter] = useState<CoverLetter | null>(null);
+  const [loadingCoverLetter, setLoadingCoverLetter] = useState(true);
+  const [generatingLetter, setGeneratingLetter] = useState(false);
+  const [coverLetterError, setCoverLetterError] = useState("");
+  const [tone, setTone] = useState<CoverLetterTone>("professional");
+  const [emphasis, setEmphasis] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [editedContent, setEditedContent] = useState("");
+  const [letterDirty, setLetterDirty] = useState(false);
+  const [savingLetter, setSavingLetter] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
+
   useSessionMonitor();
 
   useEffect(() => {
@@ -48,6 +71,89 @@ export default function ApplicationDetailPage() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [params.id, router]);
+
+  useEffect(() => {
+    if (!getAuthToken()) return;
+
+    setLoadingCoverLetter(true);
+    Promise.all([
+      getActiveResume().catch(() => null),
+      getAiStatus().then((s) => s.ai_active).catch(() => null),
+      getCoverLetters(params.id as string).catch(() => []),
+    ])
+      .then(async ([resume, aiStatus, letters]) => {
+        setActiveResume(resume);
+        setAiActive(aiStatus);
+        if (letters.length > 0) {
+          const latest = await getCoverLetter(params.id as string, letters[0].id);
+          setCoverLetter(latest);
+          setEditedContent(latest.content);
+          setLetterDirty(false);
+        }
+      })
+      .finally(() => setLoadingCoverLetter(false));
+  }, [params.id]);
+
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (letterDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [letterDirty]);
+
+  async function handleGenerateCoverLetter() {
+    if (coverLetter && letterDirty) {
+      const proceed = confirm("Regenerating will discard your unsaved edits to the current draft. Continue?");
+      if (!proceed) return;
+    }
+
+    setGeneratingLetter(true);
+    setCoverLetterError("");
+    try {
+      const generated = await generateCoverLetter(params.id as string, {
+        tone,
+        emphasis: emphasis.trim() || null,
+        recipient_name: recipientName.trim() || null,
+      });
+      setCoverLetter(generated);
+      setEditedContent(generated.content);
+      setLetterDirty(false);
+    } catch (err: any) {
+      setCoverLetterError(err.message);
+    } finally {
+      setGeneratingLetter(false);
+    }
+  }
+
+  async function handleSaveCoverLetter() {
+    if (!coverLetter) return;
+    setSavingLetter(true);
+    setCoverLetterError("");
+    try {
+      const updated = await updateCoverLetter(params.id as string, coverLetter.id, editedContent);
+      setCoverLetter(updated);
+      setLetterDirty(false);
+    } catch (err: any) {
+      setCoverLetterError(err.message);
+    } finally {
+      setSavingLetter(false);
+    }
+  }
+
+  async function handleCopyCoverLetter() {
+    try {
+      await navigator.clipboard.writeText(editedContent);
+      setCopyStatus("Copied!");
+    } catch {
+      setCopyStatus("Couldn't copy - select and copy the text manually.");
+    } finally {
+      setTimeout(() => setCopyStatus(""), 2500);
+    }
+  }
 
   async function handleStatusChange(newStatus: string) {
     if (!app) return;
@@ -147,6 +253,15 @@ export default function ApplicationDetailPage() {
       setLoadingSuggestions(false);
     }
   }
+
+  const coverLetterBlocker =
+    aiActive === false
+      ? "Ask an administrator to configure the AI provider."
+      : !loadingCoverLetter && !activeResume
+      ? "Upload a resume to generate a grounded cover letter."
+      : app && !app.description
+      ? "Add the job description so the letter can be tailored."
+      : null;
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -514,6 +629,162 @@ export default function ApplicationDetailPage() {
                   <p className="text-gray-600 dark:text-gray-400 text-sm">
                     Click "Generate Suggestions" to get personalized interview preparation tips based on the job description and your resume.
                   </p>
+                )}
+              </div>
+            </div>
+
+            {/* Custom Cover Letter Section */}
+            <div className="mt-8">
+              <div className="bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Custom Cover Letter</h2>
+                </div>
+
+                {coverLetterError && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mb-3">{coverLetterError}</p>
+                )}
+
+                {coverLetterBlocker ? (
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">{coverLetterBlocker}</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      {activeResume ? `Uses your active resume: ${activeResume.filename}` : "Loading resume..."}
+                    </p>
+
+                    {!coverLetter && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        <div>
+                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tone</label>
+                          <select
+                            value={tone}
+                            onChange={(e) => setTone(e.target.value as CoverLetterTone)}
+                            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm w-full"
+                          >
+                            <option value="professional">Professional</option>
+                            <option value="warm">Warm</option>
+                            <option value="concise">Concise</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Emphasis (optional)</label>
+                          <input
+                            value={emphasis}
+                            onChange={(e) => setEmphasis(e.target.value)}
+                            placeholder="e.g. focus on leadership"
+                            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Recipient name (optional)</label>
+                          <input
+                            value={recipientName}
+                            onChange={(e) => setRecipientName(e.target.value)}
+                            placeholder="e.g. Jane Smith"
+                            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm w-full"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleGenerateCoverLetter}
+                      disabled={generatingLetter}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {generatingLetter ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          {coverLetter ? "Regenerating..." : "Generating..."}
+                        </>
+                      ) : coverLetter ? (
+                        "Regenerate Draft"
+                      ) : (
+                        "Generate Draft"
+                      )}
+                    </button>
+
+                    {coverLetter && (
+                      <div className="mt-4 space-y-3">
+                        <textarea
+                          value={editedContent}
+                          onChange={(e) => {
+                            setEditedContent(e.target.value);
+                            setLetterDirty(true);
+                          }}
+                          rows={14}
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white rounded-lg px-4 py-3 text-sm leading-relaxed"
+                        />
+
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            onClick={handleSaveCoverLetter}
+                            disabled={!letterDirty || savingLetter}
+                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {savingLetter ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            onClick={handleCopyCoverLetter}
+                            className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition text-sm font-medium"
+                          >
+                            Copy
+                          </button>
+                          {letterDirty && (
+                            <span className="text-xs text-amber-600 dark:text-amber-400">Unsaved changes</span>
+                          )}
+                          <span aria-live="polite" className="text-xs text-green-600 dark:text-green-400">
+                            {copyStatus}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                          AI-generated draft — review before submitting.
+                        </p>
+
+                        {(coverLetter.supporting_points.length > 0 || coverLetter.warnings.length > 0) && (
+                          <details className="text-sm">
+                            <summary className="cursor-pointer text-indigo-700 dark:text-indigo-400 font-medium">
+                              Why this draft?
+                            </summary>
+                            <div className="mt-2 space-y-3">
+                              {coverLetter.supporting_points.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                                    Supporting evidence
+                                  </p>
+                                  <ul className="space-y-1.5">
+                                    {coverLetter.supporting_points.map((point, idx) => (
+                                      <li key={idx} className="text-gray-700 dark:text-gray-300">
+                                        <span className="font-medium">{point.claim}</span>
+                                        <span className="text-gray-500 dark:text-gray-400"> — {point.resume_evidence}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {coverLetter.warnings.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">Warnings</p>
+                                  <ul className="space-y-1 text-amber-700 dark:text-amber-400">
+                                    {coverLetter.warnings.map((w, idx) => (
+                                      <li key={idx}>{w}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

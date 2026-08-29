@@ -44,8 +44,8 @@ export default function NewApplicationPage() {
 
   async function handleSave() {
     try {
-      await createApplication(form);
-      router.push("/applications");
+      const created = await createApplication(form);
+      router.push(`/applications/${created.id}`);
     } catch (err: any) {
       setError(err.message);
     }

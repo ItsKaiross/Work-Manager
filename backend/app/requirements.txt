@@ -13,3 +13,5 @@ pip install config
 pip install python-multipart
 pip install python-docx
 pip install pdfplumber
+pip install pytest
+pip install pytest-asyncio
