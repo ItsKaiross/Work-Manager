@@ -32,6 +32,7 @@ export default function Sidebar() {
     { href: "/applications/new", label: "Add Application" },
     { href: "/resume", label: "Resume & Success Rate" },
     { href: "/settings", label: "Settings" },
+    { href: "/help", label: "Help & User Guide" },
     ...(isAdmin ? [{ href: "/admin/dashboard", label: "⚡ Admin Panel", admin: true }] : []),
   ];
 
