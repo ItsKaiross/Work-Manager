@@ -15,11 +15,11 @@ from app.crud.user import (
 )
 from app.crud.job_application import get_applications_for_user
 from app.crud.resume import get_active_resume, get_resume_by_id_unscoped
-from app.crud.settings import get_groq_api_key, set_setting
+from app.crud.settings import get_groq_api_key, get_groq_model, set_setting
 from app.schemas.auth import UserResponse, UserUpdateRequest, UserCreateRequest
-from app.schemas.settings import GroqApiKeyUpdate, GroqApiKeyTest
+from app.schemas.settings import GroqApiKeyUpdate, GroqApiKeyTest, GroqModelUpdate
 from app.core.security import hash_password
-from app.integrations.ai_service import is_ai_available, test_groq_api_key
+from app.integrations.ai_service import is_ai_available, test_groq_api_key, list_groq_models, GROQ_MODEL
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -202,6 +202,7 @@ async def get_admin_settings(
     return {
         "groq_api_key_set": bool(key),
         "groq_api_key_preview": preview,
+        "groq_model": await get_groq_model(conn) or "auto",
     }
 
 @router.put("/settings/groq-api-key")
@@ -243,7 +244,41 @@ async def test_groq_connection(
         key = await get_groq_api_key(conn) or ""
     if not key:
         raise HTTPException(status_code=400, detail="No API key to test - enter one or save one first")
-    return await test_groq_api_key(key)
+    return await test_groq_api_key(conn, key)
+
+@router.post("/settings/groq-models")
+async def get_groq_models(
+    payload: GroqApiKeyTest,
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """List Groq models usable for AI features, for the model-selection dropdown (admin only).
+
+    Tests the key supplied in the request body if present (so an admin can
+    browse models before saving a new key), otherwise falls back to the
+    currently saved key.
+    """
+    key = (payload.groq_api_key or "").strip()
+    if not key:
+        key = await get_groq_api_key(conn) or ""
+    if not key:
+        raise HTTPException(status_code=400, detail="No API key to query models with - enter one or save one first")
+
+    models = await list_groq_models(key)
+    configured = await get_groq_model(conn) or "auto"
+    active = configured if configured != "auto" else (models[0]["id"] if models else GROQ_MODEL)
+    return {"models": models, "configured_model": configured, "active_model": active}
+
+@router.put("/settings/groq-model")
+async def update_groq_model(
+    payload: GroqModelUpdate,
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Set which Groq model AI features use, or 'auto' to always use the newest available (admin only)"""
+    value = payload.model.strip()
+    await set_setting(conn, "groq_model", "" if value in ("", "auto") else value)
+    return {"message": "Groq model updated"}
 
 @router.get("/health")
 async def get_system_health(

@@ -232,7 +232,7 @@ async def generate_cover_letter(
         tone=payload.tone,
         emphasis=payload.emphasis,
         recipient_name=payload.recipient_name,
-        model=GROQ_MODEL,
+        model=generated.get("model") or GROQ_MODEL,
         prompt_version=COVER_LETTER_PROMPT_VERSION,
         source_fingerprint=fingerprint,
     )

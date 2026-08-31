@@ -18,3 +18,8 @@ async def set_setting(conn, key: str, value: str) -> None:
 async def get_groq_api_key(conn) -> str | None:
     key = await get_setting(conn, "groq_api_key")
     return key or None
+
+async def get_groq_model(conn) -> str | None:
+    """The admin-configured Groq model id, or None if unset (meaning: auto-select)."""
+    value = await get_setting(conn, "groq_model")
+    return value or None

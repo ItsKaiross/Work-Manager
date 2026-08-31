@@ -7,3 +7,6 @@ class GroqApiKeyUpdate(BaseModel):
 
 class GroqApiKeyTest(BaseModel):
     groq_api_key: Optional[str] = None
+
+class GroqModelUpdate(BaseModel):
+    model: str

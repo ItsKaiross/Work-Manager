@@ -5,13 +5,88 @@ from typing import Any, Optional
 
 import httpx
 
-from app.crud.settings import get_groq_api_key
+from app.crud.settings import get_groq_api_key, get_groq_model
 
 logger = logging.getLogger(__name__)
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+
+# Fallback used only if auto-resolution can't reach Groq's model catalog at
+# all (e.g. transient network failure) - not a model we pin to on purpose,
+# since pinning is exactly what silently broke every AI feature when Groq
+# deprecated the previous hardcoded model out from under this app.
+GROQ_MODEL = "openai/gpt-oss-120b"
+
+# A model must support these to be usable by any of the JSON-mode prompts in
+# this module. Excludes audio/transcription/speech models and text
+# classifiers (e.g. prompt-guard) that show up in the same catalog but can't
+# serve a chat completion.
+_REQUIRED_INPUT_MODALITIES = {"text"}
+_REQUIRED_OUTPUT_MODALITY = "text"
+_REQUIRED_FEATURE = "json_mode"
+_MODEL_ID_BLOCKLIST_SUBSTRINGS = ("prompt-guard",)
+
+
+def _is_usable_chat_model(model: dict) -> bool:
+    if not isinstance(model, dict) or not model.get("active", True):
+        return False
+    model_id = model.get("id")
+    if not isinstance(model_id, str) or any(s in model_id for s in _MODEL_ID_BLOCKLIST_SUBSTRINGS):
+        return False
+    if set(model.get("input_modalities") or []) - _REQUIRED_INPUT_MODALITIES:
+        return False
+    if _REQUIRED_OUTPUT_MODALITY not in (model.get("output_modalities") or []):
+        return False
+    if _REQUIRED_FEATURE not in (model.get("supported_features") or []):
+        return False
+    return True
+
+
+async def list_groq_models(api_key: str) -> list[dict]:
+    """List Groq models usable for this app's JSON-mode chat completions.
+
+    Newest first (by Groq's `created` timestamp), so the first entry is what
+    "auto" mode picks. Returns [] on any failure - callers should treat that
+    as "couldn't determine", not "no models exist".
+    """
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(GROQ_MODELS_URL, headers={"Authorization": f"Bearer {api_key}"})
+        resp.raise_for_status()
+        raw_models = resp.json().get("data", [])
+    except Exception:
+        logger.warning("Failed to list Groq models", exc_info=True)
+        return []
+
+    models = [m for m in raw_models if _is_usable_chat_model(m)]
+    models.sort(key=lambda m: m.get("created") or 0, reverse=True)
+    return [
+        {
+            "id": m["id"],
+            "name": m.get("name") or m["id"],
+            "owned_by": m.get("owned_by"),
+            "context_window": m.get("context_window"),
+        }
+        for m in models
+    ]
+
+
+async def resolve_groq_model(conn, api_key: str) -> str:
+    """Determine which Groq model an AI call should use.
+
+    An explicit admin choice (the `groq_model` setting) is used as-is. With
+    no explicit choice ("auto"), the newest model currently supporting our
+    JSON-mode requirements is selected from Groq's live catalog - so if Groq
+    deprecates a model, the next call picks a still-available one instead of
+    failing the way cover-letter generation did before this existed.
+    """
+    configured = await get_groq_model(conn)
+    if configured:
+        return configured
+
+    models = await list_groq_models(api_key)
+    return models[0]["id"] if models else GROQ_MODEL
 
 # Groq's rate limits (especially on free-tier keys) are easy to hit during
 # bulk operations like recalculating match scores for many applications at
@@ -29,12 +104,14 @@ async def is_ai_available(conn) -> bool:
     return bool(await get_groq_api_key(conn))
 
 
-async def test_groq_api_key(api_key: str) -> dict:
-    """Verify a Groq API key actually works by calling a lightweight endpoint.
+async def test_groq_api_key(conn, api_key: str) -> dict:
+    """Verify a Groq API key AND its resolved model actually work.
 
-    Uses the models list endpoint rather than a chat completion - it only
-    needs a valid Authorization header, so it confirms connectivity/auth
-    without consuming completion tokens or quota.
+    A valid key alone isn't enough to confirm AI features will work - Groq
+    can deprecate the specific model a key resolves to (this happened in
+    production: a hardcoded model 404'd while the key itself remained
+    valid), so this also fires one minimal real completion against whatever
+    model resolve_groq_model() would pick right now.
     """
     try:
         async with httpx.AsyncClient(timeout=10) as client:
@@ -42,19 +119,51 @@ async def test_groq_api_key(api_key: str) -> dict:
                 GROQ_MODELS_URL,
                 headers={"Authorization": f"Bearer {api_key}"},
             )
-        if resp.status_code == 200:
-            return {"success": True, "message": "Connected to Groq successfully"}
         if resp.status_code == 401:
             return {"success": False, "message": "Groq rejected the API key (invalid or revoked)"}
-        return {"success": False, "message": f"Groq returned an unexpected status ({resp.status_code})"}
+        if resp.status_code != 200:
+            return {"success": False, "message": f"Groq returned an unexpected status ({resp.status_code})"}
     except httpx.TimeoutException:
         return {"success": False, "message": "Connection to Groq timed out"}
     except Exception:
         logger.warning("Groq connection test failed", exc_info=True)
         return {"success": False, "message": "Could not reach Groq"}
 
+    model = await resolve_groq_model(conn, api_key)
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                GROQ_API_URL,
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": 'Respond ONLY with this exact JSON object: {"ok": true}'},
+                        {"role": "user", "content": "ping"},
+                    ],
+                    "response_format": {"type": "json_object"},
+                    # Some catalog models spend tokens on internal reasoning
+                    # before the final answer - too small a cap here starves
+                    # them out and reports a healthy model as broken.
+                    "max_tokens": 300,
+                },
+            )
+        if resp.status_code == 200:
+            return {"success": True, "message": f"Connected successfully using {model}"}
+        if resp.status_code == 404:
+            return {
+                "success": False,
+                "message": f"API key is valid, but model '{model}' is unavailable - pick a different model below",
+            }
+        return {"success": False, "message": f"Model check failed ({resp.status_code}) for '{model}'"}
+    except httpx.TimeoutException:
+        return {"success": False, "message": f"Model check timed out for '{model}'"}
+    except Exception:
+        logger.warning("Groq model check failed", exc_info=True)
+        return {"success": False, "message": f"Could not verify model '{model}'"}
 
-async def _call_groq_json_with_key(api_key: str, system_prompt: str, user_prompt: str) -> Optional[dict]:
+
+async def _call_groq_json_with_key(api_key: str, model: str, system_prompt: str, user_prompt: str) -> Optional[dict]:
     """Call Groq chat completions with an already-known API key (no DB access).
 
     Safe to run concurrently - unlike the conn-based variant, this never
@@ -72,7 +181,7 @@ async def _call_groq_json_with_key(api_key: str, system_prompt: str, user_prompt
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": GROQ_MODEL,
+                        "model": model,
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": user_prompt},
@@ -112,7 +221,8 @@ async def _call_groq_json(conn, system_prompt: str, user_prompt: str) -> Optiona
     api_key = await get_groq_api_key(conn)
     if not api_key:
         return None
-    return await _call_groq_json_with_key(api_key, system_prompt, user_prompt)
+    model = await resolve_groq_model(conn, api_key)
+    return await _call_groq_json_with_key(api_key, model, system_prompt, user_prompt)
 
 
 def _as_str_list(value: Any) -> Optional[list[str]]:
@@ -250,18 +360,19 @@ async def ai_calculate_match_score(
 
 async def ai_calculate_match_score_with_key(
     api_key: str,
+    model: str,
     resume_skills: Optional[list[str]],
     resume_raw_text: str,
     resume_experience: Optional[float],
     job_description: str,
     position: str = "",
 ) -> Optional[dict]:
-    """Same as ai_calculate_match_score, but with an already-known API key so it
+    """Same as ai_calculate_match_score, but with an already-known API key/model so it
     never touches the DB connection - safe to run many of these concurrently."""
     system_prompt, user_prompt = _match_score_prompts(
         resume_skills, resume_raw_text, resume_experience, job_description, position
     )
-    result = await _call_groq_json_with_key(api_key, system_prompt, user_prompt)
+    result = await _call_groq_json_with_key(api_key, model, system_prompt, user_prompt)
     return _parse_match_score_result(result)
 
 
@@ -431,8 +542,18 @@ async def ai_generate_cover_letter(
         }
     )
 
-    result = await _call_groq_json(conn, system_prompt, user_prompt)
-    return _parse_cover_letter_result(result)
+    api_key = await get_groq_api_key(conn)
+    if not api_key:
+        return None
+    # Resolved explicitly (rather than via _call_groq_json) so the model
+    # actually used can be persisted alongside the letter for auditing -
+    # useful now that "auto" mode means it can vary between generations.
+    model = await resolve_groq_model(conn, api_key)
+    result = await _call_groq_json_with_key(api_key, model, system_prompt, user_prompt)
+    parsed = _parse_cover_letter_result(result)
+    if parsed:
+        parsed["model"] = model
+    return parsed
 
 
 async def ai_generate_job_summary(conn, job_description: str, position: str, company: str) -> Optional[dict]:

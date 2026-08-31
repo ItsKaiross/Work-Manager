@@ -401,9 +401,13 @@ async def recalculate_match_scores_for_applications(
     raw_text = (resume.get('parsed_data') or {}).get('raw_text', '')
 
     from app.crud.settings import get_groq_api_key
-    from app.integrations.ai_service import ai_calculate_match_score_with_key
+    from app.integrations.ai_service import ai_calculate_match_score_with_key, resolve_groq_model
 
     api_key = await get_groq_api_key(conn)
+    # Resolved once up front (like api_key) rather than per-application -
+    # in "auto" mode this is itself a Groq API call, and every application
+    # in this batch should be scored against the same model anyway.
+    model = await resolve_groq_model(conn, api_key) if api_key else None
     semaphore = asyncio.Semaphore(concurrency)
 
     async def _compute(app: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Optional[float]]]:
@@ -416,6 +420,7 @@ async def recalculate_match_scores_for_applications(
                 try:
                     ai_result = await ai_calculate_match_score_with_key(
                         api_key,
+                        model,
                         resume_skills=resume_skills,
                         resume_raw_text=raw_text,
                         resume_experience=resume_experience,

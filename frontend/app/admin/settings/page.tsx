@@ -6,7 +6,10 @@ import {
   updateGroqApiKey,
   clearGroqApiKey,
   testGroqConnection,
+  getGroqModels,
+  updateGroqModel,
   AiSettings,
+  GroqModelsResult,
 } from "@/lib/admin-api";
 
 export default function SettingsPage() {
@@ -21,6 +24,13 @@ export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  const [models, setModels] = useState<GroqModelsResult | null>(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState("");
+  const [selectedModel, setSelectedModel] = useState("auto");
+  const [savingModel, setSavingModel] = useState(false);
+  const [modelSaveMessage, setModelSaveMessage] = useState("");
+
   useEffect(() => {
     loadAiSettings();
   }, []);
@@ -31,10 +41,41 @@ export default function SettingsPage() {
       const data = await getAiSettings();
       setAiSettings(data);
       setAiError("");
+      if (data.groq_api_key_set) {
+        await loadModels();
+      }
     } catch (err: any) {
       setAiError(err.message);
     } finally {
       setAiLoading(false);
+    }
+  }
+
+  async function loadModels() {
+    try {
+      setModelsLoading(true);
+      setModelsError("");
+      const data = await getGroqModels();
+      setModels(data);
+      setSelectedModel(data.configured_model);
+    } catch (err: any) {
+      setModelsError(err.message);
+    } finally {
+      setModelsLoading(false);
+    }
+  }
+
+  async function handleSaveModel() {
+    setSavingModel(true);
+    setModelSaveMessage("");
+    try {
+      await updateGroqModel(selectedModel);
+      setModelSaveMessage("✅ Model preference saved");
+      await loadAiSettings();
+    } catch (err: any) {
+      setModelSaveMessage(`❌ ${err.message}`);
+    } finally {
+      setSavingModel(false);
     }
   }
 
@@ -168,6 +209,61 @@ export default function SettingsPage() {
 
             {saveMessage && (
               <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">{saveMessage}</p>
+            )}
+
+            {aiSettings?.groq_api_key_set && (
+              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Model</span>
+                  <button
+                    onClick={loadModels}
+                    disabled={modelsLoading}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                  >
+                    {modelsLoading ? "Refreshing..." : "Refresh model list"}
+                  </button>
+                </div>
+
+                {modelsError ? (
+                  <p className="text-sm text-red-500">{modelsError}</p>
+                ) : (
+                  <>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        disabled={modelsLoading}
+                        className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm"
+                      >
+                        <option value="auto">
+                          Auto (always use the newest available model)
+                        </option>
+                        {models?.models.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name} {m.owned_by ? `— ${m.owned_by}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={handleSaveModel}
+                        disabled={savingModel || modelsLoading || selectedModel === models?.configured_model}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        Save
+                      </button>
+                    </div>
+                    {models && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Currently active: <span className="font-mono">{models.active_model}</span>
+                        {models.configured_model === "auto" && " (auto-selected)"}
+                      </p>
+                    )}
+                    {modelSaveMessage && (
+                      <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">{modelSaveMessage}</p>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </>
         )}

@@ -173,6 +173,7 @@ export async function getUserActivity(userId: number): Promise<UserActivity> {
 export interface AiSettings {
   groq_api_key_set: boolean;
   groq_api_key_preview: string | null;
+  groq_model: string;
 }
 
 export async function getAiSettings(): Promise<AiSettings> {
@@ -220,6 +221,50 @@ export async function testGroqConnection(apiKey?: string): Promise<AiConnectionT
     throw new Error(data.detail || "Failed to test connection");
   }
   return data;
+}
+
+export interface GroqModelOption {
+  id: string;
+  name: string;
+  owned_by: string | null;
+  context_window: number | null;
+}
+
+export interface GroqModelsResult {
+  models: GroqModelOption[];
+  configured_model: string;
+  active_model: string;
+}
+
+export async function getGroqModels(apiKey?: string): Promise<GroqModelsResult> {
+  const res = await fetch(`${API_URL}/admin/settings/groq-models`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify({ groq_api_key: apiKey || null }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to fetch Groq models");
+  }
+  return data;
+}
+
+export async function updateGroqModel(model: string): Promise<void> {
+  const res = await fetch(`${API_URL}/admin/settings/groq-model`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify({ model }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to update Groq model" }));
+    throw new Error(err.detail || "Failed to update Groq model");
+  }
 }
 
 export async function clearGroqApiKey(): Promise<void> {
