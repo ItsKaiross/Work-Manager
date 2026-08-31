@@ -30,8 +30,8 @@ export default function ApplicationHeader({ app, onDelete, onBackClick }: Applic
   }, []);
 
   return (
-    <div className="sticky top-0 z-20 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-200 dark:border-gray-700 -mx-4 md:-mx-8 px-4 md:px-8 py-3 mb-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="border-b border-gray-200 dark:border-gray-700 pb-3 mb-6">
+      <div>
         <Link
           href="/applications"
           onClick={onBackClick}

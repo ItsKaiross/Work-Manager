@@ -274,10 +274,10 @@ export default function ApplicationDetailPage() {
       <Sidebar />
       <main className="flex-1 p-4 pt-16 md:p-8 overflow-y-auto">
         {loading && <DetailSkeleton />}
-        {error && <p className="text-red-500 max-w-6xl mx-auto">{error}</p>}
+        {error && <p className="text-red-500">{error}</p>}
 
         {app && (
-          <div key={app.id} className="max-w-6xl mx-auto">
+          <div key={app.id}>
             <ApplicationHeader app={app} onDelete={handleDelete} onBackClick={handleBackClick} />
 
             <PipelineStepper

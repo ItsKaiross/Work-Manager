@@ -1,6 +1,6 @@
 export default function DetailSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto animate-pulse" aria-hidden="true">
+    <div className="animate-pulse" aria-hidden="true">
       <div className="h-16 bg-gray-200 dark:bg-gray-800 rounded-lg mb-4" />
       <div className="h-24 bg-gray-200 dark:bg-gray-800 rounded-lg mb-6" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
