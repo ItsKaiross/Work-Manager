@@ -258,6 +258,23 @@ export async function generateJobKeywords(resumeId: number): Promise<Resume> {
   return response.json();
 }
 
+export async function recalculateMatchScores(resumeId: number): Promise<{ message: string; applications_processed: number }> {
+  const token = getAuthToken();
+  const response = await fetch(`${API_URL}/api/resumes/${resumeId}/recalculate`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Failed to recalculate match scores");
+  }
+
+  return response.json();
+}
+
 export async function deleteResume(resumeId: number): Promise<void> {
   const token = getAuthToken();
   const response = await fetch(`${API_URL}/api/resumes/${resumeId}`, {
