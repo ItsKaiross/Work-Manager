@@ -72,6 +72,41 @@ export async function extractJobDetails(url: string) {
     return res.json();
 }
 
+export async function updateApplication(
+    appId: number | string,
+    data: JobApplication
+): Promise<JobApplication> {
+    const res = await fetch(`${API_URL}/applications/${appId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeader(),
+        },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || "Failed to update application");
+    }
+    return res.json();
+}
+
+export async function getApplication(appId: number | string): Promise<JobApplication> {
+    const res = await fetch(`${API_URL}/applications/${appId}`, {
+        headers: { ...authHeader() },
+    });
+    if (!res.ok) throw new Error("Application not found");
+    return res.json();
+}
+
+export async function deleteApplication(appId: number | string): Promise<void> {
+    const res = await fetch(`${API_URL}/applications/${appId}`, {
+        method: "DELETE",
+        headers: { ...authHeader() },
+    });
+    if (!res.ok) throw new Error("Failed to delete application");
+}
+
 export async function createApplication(data: any) {
     const res = await fetch(`${API_URL}/applications`, {
         method: "POST",

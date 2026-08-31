@@ -69,7 +69,13 @@ async def fetch_html(url: str) -> str:
     async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
         resp = await client.get(url, headers=headers)
         resp.raise_for_status()
-        return resp.text
+        try:
+            # Force UTF-8: near-universal for modern job postings. Trusting
+            # httpx's charset guess here is what produces mojibake (e.g.
+            # "Â·", "â†’") when a page mislabels or omits its charset.
+            return resp.content.decode("utf-8")
+        except UnicodeDecodeError:
+            return resp.text
 
 def _clean_description(raw: str | None) -> str | None:
     if not raw:
