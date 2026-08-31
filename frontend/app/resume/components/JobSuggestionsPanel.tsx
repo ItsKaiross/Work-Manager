@@ -24,6 +24,7 @@ interface JobSuggestionsPanelProps {
 
 export default function JobSuggestionsPanel({ resume, keywordsLoading, keywordsError, generatedAt, onGenerate }: JobSuggestionsPanelProps) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [openSearch, setOpenSearch] = useState<{ resumeId: Resume["id"]; keyword: string } | null>(null);
 
   useEffect(() => {
     setDismissed(new Set());
@@ -65,7 +66,19 @@ export default function JobSuggestionsPanel({ resume, keywordsLoading, keywordsE
             >
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{keyword}</span>
               <div className="flex items-center gap-1 shrink-0">
-                <details className="relative group">
+                <details
+                  className="relative group"
+                  open={openSearch?.resumeId === resume.id && openSearch.keyword === keyword}
+                  onToggle={(event) => {
+                    if (event.currentTarget.open) {
+                      setOpenSearch({ resumeId: resume.id, keyword });
+                    } else {
+                      setOpenSearch((current) =>
+                        current?.resumeId === resume.id && current.keyword === keyword ? null : current
+                      );
+                    }
+                  }}
+                >
                   <summary
                     className="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none min-h-[36px] px-3 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-600 transition flex items-center gap-1"
                   >
