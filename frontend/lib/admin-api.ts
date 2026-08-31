@@ -201,6 +201,27 @@ export async function updateGroqApiKey(apiKey: string): Promise<void> {
   }
 }
 
+export interface AiConnectionTestResult {
+  success: boolean;
+  message: string;
+}
+
+export async function testGroqConnection(apiKey?: string): Promise<AiConnectionTestResult> {
+  const res = await fetch(`${API_URL}/admin/settings/groq-api-key/test`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+    },
+    body: JSON.stringify({ groq_api_key: apiKey || null }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.detail || "Failed to test connection");
+  }
+  return data;
+}
+
 export async function clearGroqApiKey(): Promise<void> {
   const res = await fetch(`${API_URL}/admin/settings/groq-api-key`, {
     method: "DELETE",

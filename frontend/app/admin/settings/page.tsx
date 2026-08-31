@@ -1,7 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getAiSettings, updateGroqApiKey, clearGroqApiKey, AiSettings } from "@/lib/admin-api";
+import {
+  getAiSettings,
+  updateGroqApiKey,
+  clearGroqApiKey,
+  testGroqConnection,
+  AiSettings,
+} from "@/lib/admin-api";
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
@@ -12,6 +18,8 @@ export default function SettingsPage() {
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     loadAiSettings();
@@ -34,6 +42,7 @@ export default function SettingsPage() {
     if (!apiKeyInput.trim()) return;
     setSaving(true);
     setSaveMessage("");
+    setTestResult(null);
     try {
       await updateGroqApiKey(apiKeyInput.trim());
       setApiKeyInput("");
@@ -46,10 +55,24 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleTestConnection() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await testGroqConnection(apiKeyInput.trim() || undefined);
+      setTestResult(result);
+    } catch (err: any) {
+      setTestResult({ success: false, message: err.message });
+    } finally {
+      setTesting(false);
+    }
+  }
+
   async function handleClearApiKey() {
     if (!confirm("Remove the Groq API key? AI-assisted features will fall back to the built-in logic.")) return;
     setSaving(true);
     setSaveMessage("");
+    setTestResult(null);
     try {
       await clearGroqApiKey();
       setSaveMessage("✅ Groq API key removed");
@@ -117,7 +140,31 @@ export default function SettingsPage() {
                   Remove
                 </button>
               )}
+              <button
+                onClick={handleTestConnection}
+                disabled={testing || (!apiKeyInput.trim() && !aiSettings?.groq_api_key_set)}
+                className="px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              >
+                {testing ? "Testing..." : "Test Connection"}
+              </button>
             </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {apiKeyInput.trim()
+                ? "Test Connection will check the key you've typed above."
+                : "Test Connection will check the currently saved key."}
+            </p>
+
+            {testResult && (
+              <p
+                className={`text-sm mt-2 ${
+                  testResult.success
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {testResult.success ? "✅" : "❌"} {testResult.message}
+              </p>
+            )}
 
             {saveMessage && (
               <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">{saveMessage}</p>

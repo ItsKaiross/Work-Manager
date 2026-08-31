@@ -10,6 +10,7 @@ from app.crud.settings import get_groq_api_key
 logger = logging.getLogger(__name__)
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # Groq's rate limits (especially on free-tier keys) are easy to hit during
@@ -26,6 +27,31 @@ _RATE_LIMIT_MAX_WAIT_SECONDS = 5.0
 
 async def is_ai_available(conn) -> bool:
     return bool(await get_groq_api_key(conn))
+
+
+async def test_groq_api_key(api_key: str) -> dict:
+    """Verify a Groq API key actually works by calling a lightweight endpoint.
+
+    Uses the models list endpoint rather than a chat completion - it only
+    needs a valid Authorization header, so it confirms connectivity/auth
+    without consuming completion tokens or quota.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                GROQ_MODELS_URL,
+                headers={"Authorization": f"Bearer {api_key}"},
+            )
+        if resp.status_code == 200:
+            return {"success": True, "message": "Connected to Groq successfully"}
+        if resp.status_code == 401:
+            return {"success": False, "message": "Groq rejected the API key (invalid or revoked)"}
+        return {"success": False, "message": f"Groq returned an unexpected status ({resp.status_code})"}
+    except httpx.TimeoutException:
+        return {"success": False, "message": "Connection to Groq timed out"}
+    except Exception:
+        logger.warning("Groq connection test failed", exc_info=True)
+        return {"success": False, "message": "Could not reach Groq"}
 
 
 async def _call_groq_json_with_key(api_key: str, system_prompt: str, user_prompt: str) -> Optional[dict]:

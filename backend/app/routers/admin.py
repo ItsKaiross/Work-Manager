@@ -17,9 +17,9 @@ from app.crud.job_application import get_applications_for_user
 from app.crud.resume import get_active_resume, get_resume_by_id_unscoped
 from app.crud.settings import get_groq_api_key, set_setting
 from app.schemas.auth import UserResponse, UserUpdateRequest, UserCreateRequest
-from app.schemas.settings import GroqApiKeyUpdate
+from app.schemas.settings import GroqApiKeyUpdate, GroqApiKeyTest
 from app.core.security import hash_password
-from app.integrations.ai_service import is_ai_available
+from app.integrations.ai_service import is_ai_available, test_groq_api_key
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -225,6 +225,25 @@ async def clear_groq_api_key(
     """Clear the Groq API key, disabling AI-assisted features (admin only)"""
     await set_setting(conn, "groq_api_key", "")
     return {"message": "Groq API key cleared"}
+
+@router.post("/settings/groq-api-key/test")
+async def test_groq_connection(
+    payload: GroqApiKeyTest,
+    current_admin: dict = Depends(get_current_admin),
+    conn = Depends(get_db),
+):
+    """Test connectivity to Groq (admin only).
+
+    Tests the key supplied in the request body if present (so an admin can
+    verify a key before saving it), otherwise falls back to the currently
+    saved key.
+    """
+    key = (payload.groq_api_key or "").strip()
+    if not key:
+        key = await get_groq_api_key(conn) or ""
+    if not key:
+        raise HTTPException(status_code=400, detail="No API key to test - enter one or save one first")
+    return await test_groq_api_key(key)
 
 @router.get("/health")
 async def get_system_health(
