@@ -227,9 +227,17 @@ Work Manager/
    # Run resume schema
    mysql -u your_username -p work_manager < resume_schema.sql
    
+   # Run settings schema (required for Groq/AI settings)
+   mysql -u your_username -p work_manager < settings_schema.sql
+   
+   # Run cover letter schema (required for cover letter generation)
+   mysql -u your_username -p work_manager < cover_letter_schema.sql
+   
    # Fix duplicate match scores (if needed)
    mysql -u your_username -p work_manager < fix_duplicate_match_scores.sql
    ```
+   
+   Note: `app_settings` and `cover_letters` are also created automatically on backend startup (see `backend/app/core/migrations.py`) if missing, but running the schema files explicitly keeps setup deterministic.
 
 6. **Start backend server**
    ```bash
