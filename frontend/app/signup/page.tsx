@@ -41,12 +41,12 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <main className="w-full max-w-md">
-        <div className="flex flex-col w-full rounded-lg bg-gray-100 shadow-lg p-6 sm:p-10">
-          <h1 className="text-black self-center text-3xl font-bold">Sign up</h1>
+        <div className="flex flex-col w-full rounded-lg bg-gray-100 dark:bg-gray-800 shadow-lg p-6 sm:p-10 transition-colors">
+          <h1 className="text-black dark:text-white self-center text-3xl font-bold">Sign up</h1>
           {error && <p className="mt-4 text-sm text-red-500 text-center">{error}</p>}
 
           <input
-            className="bg-white shadow-md rounded-md px-4 py-1 mt-5"
+            className="bg-white dark:bg-gray-700 dark:text-white shadow-md rounded-md px-4 py-1 mt-5"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -54,7 +54,7 @@ export default function SignupPage() {
             required
           />
           <input
-            className="bg-white shadow-md rounded-md px-4 py-1 mt-5"
+            className="bg-white dark:bg-gray-700 dark:text-white shadow-md rounded-md px-4 py-1 mt-5"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -62,7 +62,7 @@ export default function SignupPage() {
             required
           />
           <input
-            className="bg-white shadow-md rounded-md px-4 py-1 mt-5"
+            className="bg-white dark:bg-gray-700 dark:text-white shadow-md rounded-md px-4 py-1 mt-5"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -73,13 +73,13 @@ export default function SignupPage() {
           <button
             onClick={handleSignup}
             disabled={loading}
-            className="flex w-full px-4 py-2 bg-gray-200 mt-5 justify-center rounded-lg text-black hover:bg-blue-500 hover:text-white transition duration-300"
+            className="flex w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 mt-5 justify-center rounded-lg text-black dark:text-white hover:bg-blue-500 hover:text-white transition duration-300"
           >
             {loading ? "Creating account..." : "Sign up"}
           </button>
 
           <div className="flex w-full justify-center mt-2">
-            <p>Already have an account?</p>
+            <p className="dark:text-gray-200">Already have an account?</p>
             <Link className="ml-2 text-blue-600" href="/">Log in</Link>
           </div>
         </div>
