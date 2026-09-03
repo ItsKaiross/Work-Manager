@@ -12,6 +12,7 @@ export default function NewApplicationPage() {
   const [url, setUrl] = useState("");
   const [form, setForm] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [checked, setChecked] = useState(false);
   const router = useRouter();
@@ -43,11 +44,15 @@ export default function NewApplicationPage() {
   }
 
   async function handleSave() {
+    if (saving) return;
+    setSaving(true);
+    setError("");
     try {
       const created = await createApplication(form);
       router.push(`/applications/${created.id}`);
     } catch (err: any) {
       setError(err.message);
+      setSaving(false);
     }
   }
 
@@ -121,9 +126,10 @@ export default function NewApplicationPage() {
             )}
             <button
               type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+              disabled={saving}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Application
+              {saving ? "Saving..." : "Save Application"}
             </button>
           </form>
         )}

@@ -109,7 +109,22 @@ async def get_application_by_id(conn, app_id: int, user_id: int) -> dict | None:
             return await cur.fetchone()
 
 async def create_application(conn, data: dict, user_id: int) -> dict:
+    job_url = data.get("job_url")
     async with conn.cursor(DictCursor) as cur:
+        if job_url:
+            await cur.execute(
+                "SELECT id FROM job_applications WHERE user_id = %s AND job_url = %s LIMIT 1",
+                (user_id, job_url),
+            )
+        else:
+            await cur.execute(
+                "SELECT id FROM job_applications WHERE user_id = %s AND company = %s AND position = %s LIMIT 1",
+                (user_id, data["company"], data["position"]),
+            )
+        existing = await cur.fetchone()
+        if existing:
+            return await get_application_by_id(conn, existing["id"], user_id)
+
         await cur.execute(
             """
             INSERT INTO job_applications
@@ -120,7 +135,7 @@ async def create_application(conn, data: dict, user_id: int) -> dict:
                 user_id,
                 data["company"],
                 data["position"],
-                data.get("job_url"),
+                job_url,
                 data.get("location"),
                 data.get("salary_range"),
                 data.get("currency", "USD"),
