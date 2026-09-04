@@ -12,7 +12,11 @@ const STATUSES: Status[] = ["all", "saved", "applied", "interviewing", "offer", 
 
 export default function StatusFilter({ applications, activeFilter, onFilterChange }: StatusFilterProps) {
   return (
-    <div className="flex gap-2 flex-wrap mb-6">
+    <div className="mb-4">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
+        Status
+      </h2>
+      <div className="flex gap-2 flex-wrap">
       {STATUSES.map((status) => {
         const count = status === "all"
           ? applications.length
@@ -32,6 +36,7 @@ export default function StatusFilter({ applications, activeFilter, onFilterChang
           </button>
         );
       })}
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Sidebar from "@/app/components/layout/Sidebar";
 import ApplicationCard from "@/app/applications/ApplicationCard";
 import StatusFilter from "@/app/applications/StatusFilter";
 import CategoryFilter from "@/app/applications/CategoryFilter";
+import ApplicationsSkeleton from "@/app/applications/ApplicationsSkeleton";
 import { useApplications } from "@/hooks/useApplication";
 import { JobApplication } from "@/types/job_application";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
@@ -162,14 +163,21 @@ export default function ApplicationsPage() {
   });
 
   const hasActiveFilters =
-    searchQuery.trim() !== "" || dateFrom !== "" || dateTo !== "" || activeCategory !== "all";
+    searchQuery.trim() !== "" ||
+    dateFrom !== "" ||
+    dateTo !== "" ||
+    activeCategory !== "all" ||
+    activeFilter !== "all";
 
   const clearFilters = () => {
     setSearchQuery("");
     setDateFrom("");
     setDateTo("");
     setActiveCategory("all");
+    setActiveFilter("all");
   };
+
+  const isInitialLoading = loading && applications.length === 0;
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -262,7 +270,9 @@ export default function ApplicationsPage() {
 
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        {!loading && !error && (
+        {!error && isInitialLoading && <ApplicationsSkeleton />}
+
+        {!error && !isInitialLoading && (
           <>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
               <div className="relative flex-1 sm:max-w-xs">
@@ -325,7 +335,30 @@ export default function ApplicationsPage() {
             />
 
             {filtered.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400">No applications match this filter.</p>
+              <div className="flex flex-col items-center justify-center text-center py-16 px-4 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                <svg
+                  className="w-10 h-10 text-gray-300 dark:text-gray-600 mb-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V4a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V20a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-gray-500 dark:text-gray-400 mb-3">
+                  {applications.length === 0
+                    ? "You haven't added any applications yet."
+                    : "No applications match this filter."}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm text-blue-500 hover:text-blue-600 transition"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((app) => (

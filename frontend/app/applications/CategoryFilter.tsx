@@ -23,24 +23,29 @@ export default function CategoryFilter({ applications, activeCategory, onCategor
   );
 
   return (
-    <div className="flex gap-2 flex-wrap mb-6">
-      {visibleCategories.map((category) => {
-        const count = category === "all" ? applications.length : counts[category] ?? 0;
+    <div className="mb-6">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
+        Category
+      </h2>
+      <div className="flex gap-2 flex-wrap">
+        {visibleCategories.map((category) => {
+          const count = category === "all" ? applications.length : counts[category] ?? 0;
 
-        return (
-          <button
-            key={category}
-            onClick={() => onCategoryChange(category)}
-            className={`px-3 py-1.5 rounded-full text-sm transition ${
-              activeCategory === category
-                ? "bg-purple-500 text-white"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
-          >
-            {category === "all" ? "All Categories" : category} ({count})
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={category}
+              onClick={() => onCategoryChange(category)}
+              className={`px-3 py-1.5 rounded-full text-sm transition ${
+                activeCategory === category
+                  ? "bg-purple-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              {category === "all" ? "All Categories" : category} ({count})
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
