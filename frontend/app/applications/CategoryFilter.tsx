@@ -23,7 +23,7 @@ export default function CategoryFilter({ applications, activeCategory, onCategor
   );
 
   return (
-    <div className="mb-6">
+    <div>
       <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
         Category
       </h2>
