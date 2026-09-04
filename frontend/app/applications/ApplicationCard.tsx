@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { JobApplication } from "@/types/job_application";
 import { getAuthToken } from "@/lib/auth";
@@ -53,6 +53,12 @@ export default function ApplicationCard({
   const [app, setApp] = useState(initialApp);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [updating, setUpdating] = useState(false);
+
+  // The list refreshes in the background and after match recalculation. Keep the
+  // card's local copy in sync so a newly returned match score is rendered.
+  useEffect(() => {
+    setApp(initialApp);
+  }, [initialApp]);
 
   const appliedDate = app.applied_date
     ? new Date(app.applied_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
