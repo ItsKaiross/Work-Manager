@@ -17,6 +17,7 @@ def _parse_json_field(value: Any, default: Any) -> Any:
 def _with_parsed_json(row: dict) -> dict:
     row["supporting_points"] = _parse_json_field(row.get("supporting_points"), [])
     row["warnings"] = _parse_json_field(row.get("warnings"), [])
+    row["selected_links"] = _parse_json_field(row.get("selected_links"), {})
     return row
 
 
@@ -29,6 +30,7 @@ def compute_source_fingerprint(
     tone: str,
     emphasis: Optional[str],
     recipient_name: Optional[str],
+    selected_links: Optional[dict[str, str]] = None,
 ) -> str:
     """Hash the inputs that make a generated draft "current".
 
@@ -47,6 +49,7 @@ def compute_source_fingerprint(
             tone or "",
             (emphasis or "").strip(),
             (recipient_name or "").strip(),
+            json.dumps(selected_links or {}, sort_keys=True),
         ]
     )
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -67,6 +70,7 @@ async def create_cover_letter(
     model: Optional[str],
     prompt_version: Optional[str],
     source_fingerprint: Optional[str],
+    selected_links: Optional[dict[str, str]] = None,
 ) -> dict:
     async with conn.cursor(DictCursor) as cur:
         await cur.execute(
@@ -74,8 +78,8 @@ async def create_cover_letter(
             INSERT INTO cover_letters
                 (application_id, user_id, resume_id, content, ai_content,
                  supporting_points, warnings, tone, emphasis, recipient_name,
-                 model, prompt_version, source_fingerprint)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 model, prompt_version, source_fingerprint, selected_links)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 application_id,
@@ -91,6 +95,7 @@ async def create_cover_letter(
                 model,
                 prompt_version,
                 source_fingerprint,
+                json.dumps(selected_links or {}),
             ),
         )
         await conn.commit()

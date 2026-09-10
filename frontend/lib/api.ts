@@ -1,6 +1,7 @@
 import { JobApplication } from "@/types/job_application";
 import { CoverLetter, CoverLetterSummary, CoverLetterTone } from "@/types/cover_letter";
 import { getAuthToken } from "@/lib/auth";
+import { ProfessionalLinks, ProfessionalLinkKey } from "@/types/profile";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -131,7 +132,12 @@ export async function getActiveResume(): Promise<{ id: number; filename: string 
 
 export async function generateCoverLetter(
     appId: number | string,
-    data: { tone: CoverLetterTone; emphasis?: string | null; recipient_name?: string | null }
+    data: {
+        tone: CoverLetterTone;
+        emphasis?: string | null;
+        recipient_name?: string | null;
+        selected_links?: ProfessionalLinkKey[];
+    }
 ): Promise<CoverLetter> {
     const res = await fetch(`${API_URL}/applications/${appId}/cover-letters`, {
         method: "POST",
@@ -144,6 +150,27 @@ export async function generateCoverLetter(
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.detail || "Failed to generate cover letter");
+    }
+    return res.json();
+}
+
+export async function getProfessionalLinks(): Promise<ProfessionalLinks> {
+    const res = await fetch(`${API_URL}/api/profile/links`, {
+        headers: { ...authHeader() },
+    });
+    if (!res.ok) throw new Error("Failed to fetch professional links");
+    return res.json();
+}
+
+export async function updateProfessionalLinks(data: ProfessionalLinks): Promise<ProfessionalLinks> {
+    const res = await fetch(`${API_URL}/api/profile/links`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail?.[0]?.msg || body.detail || "Failed to save professional links");
     }
     return res.json();
 }

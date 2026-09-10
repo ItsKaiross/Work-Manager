@@ -18,6 +18,21 @@ LETTER_ID = 7
 OTHER_USER_APP = None  # a get_application_by_id mock returning None simulates "not mine / doesn't exist"
 
 
+def _mock_links(monkeypatch, **overrides):
+    links = {
+        "resume_url": None,
+        "portfolio_url": None,
+        "github_url": None,
+        "linkedin_url": None,
+    }
+    links.update(overrides)
+    monkeypatch.setattr(
+        job_applications.profile_crud,
+        "get_professional_links",
+        AsyncMock(return_value=links),
+    )
+
+
 def _fake_application(**overrides):
     base = {
         "id": APP_ID,
@@ -81,6 +96,7 @@ def _fake_letter_row(**overrides):
 
 
 def test_generate_success(client, monkeypatch):
+    _mock_links(monkeypatch)
     monkeypatch.setattr(job_applications.crud, "get_application_by_id", AsyncMock(return_value=_fake_application()))
     monkeypatch.setattr(job_applications.resume_crud, "get_active_resume", AsyncMock(return_value=_fake_resume()))
     monkeypatch.setattr(job_applications, "ai_generate_cover_letter", AsyncMock(return_value=_fake_generated()))
@@ -143,6 +159,7 @@ def test_generate_description_too_short(client, monkeypatch):
 
 
 def test_generate_ai_unavailable_returns_503(client, monkeypatch):
+    _mock_links(monkeypatch)
     monkeypatch.setattr(job_applications.crud, "get_application_by_id", AsyncMock(return_value=_fake_application()))
     monkeypatch.setattr(job_applications.resume_crud, "get_active_resume", AsyncMock(return_value=_fake_resume()))
     monkeypatch.setattr(job_applications, "ai_generate_cover_letter", AsyncMock(return_value=None))
@@ -153,6 +170,7 @@ def test_generate_ai_unavailable_returns_503(client, monkeypatch):
 
 
 def test_generate_ai_raises_returns_503(client, monkeypatch):
+    _mock_links(monkeypatch)
     monkeypatch.setattr(job_applications.crud, "get_application_by_id", AsyncMock(return_value=_fake_application()))
     monkeypatch.setattr(job_applications.resume_crud, "get_active_resume", AsyncMock(return_value=_fake_resume()))
     monkeypatch.setattr(job_applications, "ai_generate_cover_letter", AsyncMock(side_effect=RuntimeError("boom")))
@@ -273,3 +291,49 @@ def test_fingerprint_changes_with_resume_id():
     )
     changed = compute_source_fingerprint(**{**kwargs, "resume_id": 10})
     assert compute_source_fingerprint(**kwargs) != changed
+
+
+def test_generate_resolves_only_selected_saved_links(client, monkeypatch):
+    _mock_links(
+        monkeypatch,
+        portfolio_url="https://portfolio.example.com",
+        github_url="https://github.com/example",
+    )
+    monkeypatch.setattr(job_applications.crud, "get_application_by_id", AsyncMock(return_value=_fake_application()))
+    monkeypatch.setattr(job_applications.resume_crud, "get_active_resume", AsyncMock(return_value=_fake_resume()))
+    ai_mock = AsyncMock(return_value=_fake_generated())
+    create_mock = AsyncMock(
+        return_value=_fake_letter_row(selected_links={"github": "https://github.com/example"})
+    )
+    monkeypatch.setattr(job_applications, "ai_generate_cover_letter", ai_mock)
+    monkeypatch.setattr(job_applications.cover_letter_crud, "create_cover_letter", create_mock)
+
+    res = client.post(
+        f"/applications/{APP_ID}/cover-letters",
+        json={"tone": "professional", "selected_links": ["github", "linkedin"]},
+    )
+
+    assert res.status_code == 201
+    expected = {"github": "https://github.com/example"}
+    assert ai_mock.await_args.kwargs["professional_links"] == expected
+    assert create_mock.await_args.kwargs["selected_links"] == expected
+    assert "GitHub: https://github.com/example" in create_mock.await_args.kwargs["content"]
+    assert res.json()["selected_links"] == expected
+
+
+def test_fingerprint_changes_with_selected_links():
+    kwargs = dict(
+        position="Backend Engineer",
+        company="Example Co",
+        description="We need a backend engineer.",
+        resume_id=9,
+        resume_upload_date="2026-01-01 00:00:00",
+        tone="professional",
+        emphasis=None,
+        recipient_name=None,
+    )
+    without_links = compute_source_fingerprint(**kwargs)
+    with_links = compute_source_fingerprint(
+        **kwargs, selected_links={"github": "https://github.com/example"}
+    )
+    assert without_links != with_links

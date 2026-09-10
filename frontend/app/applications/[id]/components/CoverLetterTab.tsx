@@ -1,6 +1,7 @@
 "use client";
 import { CoverLetter, CoverLetterTone } from "@/types/cover_letter";
 import AiPanel from "./AiPanel";
+import { ProfessionalLinks, ProfessionalLinkKey } from "@/types/profile";
 
 interface CoverLetterTabProps {
   coverLetter: CoverLetter | null;
@@ -9,6 +10,8 @@ interface CoverLetterTabProps {
   tone: CoverLetterTone;
   emphasis: string;
   recipientName: string;
+  professionalLinks: ProfessionalLinks | null;
+  selectedLinks: ProfessionalLinkKey[];
   editedContent: string;
   letterDirty: boolean;
   generatingLetter: boolean;
@@ -18,6 +21,7 @@ interface CoverLetterTabProps {
   onToneChange: (tone: CoverLetterTone) => void;
   onEmphasisChange: (value: string) => void;
   onRecipientNameChange: (value: string) => void;
+  onSelectedLinksChange: (value: ProfessionalLinkKey[]) => void;
   onContentChange: (value: string) => void;
   onGenerate: () => void;
   onSave: () => void;
@@ -31,6 +35,8 @@ export default function CoverLetterTab({
   tone,
   emphasis,
   recipientName,
+  professionalLinks,
+  selectedLinks,
   editedContent,
   letterDirty,
   generatingLetter,
@@ -40,6 +46,7 @@ export default function CoverLetterTab({
   onToneChange,
   onEmphasisChange,
   onRecipientNameChange,
+  onSelectedLinksChange,
   onContentChange,
   onGenerate,
   onSave,
@@ -65,8 +72,7 @@ export default function CoverLetterTab({
     >
       {!disabledReason && (
         <>
-          {!coverLetter && (
-            <div className="space-y-3 mb-4">
+          <div className="space-y-3 mb-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {activeResumeFilename ? `Uses your active resume: ${activeResumeFilename}` : "Loading resume…"}
               </p>
@@ -102,8 +108,35 @@ export default function CoverLetterTab({
                   />
                 </div>
               </div>
+              <div>
+                <div className="flex items-center justify-between gap-3 mb-1.5">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Include professional links</p>
+                  <a href="/settings#professional-links" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                    Manage links
+                  </a>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {(["resume", "portfolio", "github", "linkedin"] as ProfessionalLinkKey[]).map((key) => {
+                    const available = !!professionalLinks?.[`${key}_url` as keyof ProfessionalLinks];
+                    return (
+                      <label key={key} className={`flex items-center gap-2 text-sm capitalize ${available ? "cursor-pointer" : "text-gray-400"}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedLinks.includes(key)}
+                          disabled={!available}
+                          onChange={(e) => onSelectedLinksChange(
+                            e.target.checked
+                              ? [...selectedLinks, key]
+                              : selectedLinks.filter((item) => item !== key)
+                          )}
+                        />
+                        {key}{!available && " (not set)"}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          )}
 
           {coverLetter && (
             <div className="space-y-3">

@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import { ApplicationStatus, JobApplication } from "@/types/job_application";
 import { CoverLetter, CoverLetterTone } from "@/types/cover_letter";
+import { ProfessionalLinks, ProfessionalLinkKey } from "@/types/profile";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
 import {
@@ -16,6 +17,7 @@ import {
   getCoverLetter,
   generateCoverLetter,
   updateCoverLetter,
+  getProfessionalLinks,
 } from "@/lib/api";
 import ApplicationHeader from "./components/ApplicationHeader";
 import PipelineStepper from "./components/PipelineStepper";
@@ -67,6 +69,8 @@ export default function ApplicationDetailPage() {
   const [tone, setTone] = useState<CoverLetterTone>("professional");
   const [emphasis, setEmphasis] = useState("");
   const [recipientName, setRecipientName] = useState("");
+  const [professionalLinks, setProfessionalLinks] = useState<ProfessionalLinks | null>(null);
+  const [selectedLinks, setSelectedLinks] = useState<ProfessionalLinkKey[]>([]);
   const [editedContent, setEditedContent] = useState("");
   const [letterDirty, setLetterDirty] = useState(false);
   const [savingLetter, setSavingLetter] = useState(false);
@@ -96,10 +100,19 @@ export default function ApplicationDetailPage() {
       getActiveResume().catch(() => null),
       getAiStatus().then((s) => s.ai_active).catch(() => null),
       getCoverLetters(appId).catch(() => []),
+      getProfessionalLinks().catch(() => null),
     ])
-      .then(async ([resume, aiStatus, letters]) => {
+      .then(async ([resume, aiStatus, letters, links]) => {
         setActiveResume(resume);
         setAiActive(aiStatus);
+        setProfessionalLinks(links);
+        if (links) {
+          setSelectedLinks(
+            (["resume", "portfolio", "github", "linkedin"] as ProfessionalLinkKey[]).filter(
+              (key) => !!links[`${key}_url` as keyof ProfessionalLinks]
+            )
+          );
+        }
         if (letters.length > 0) {
           const latest = await getCoverLetter(appId, letters[0].id);
           setCoverLetter(latest);
@@ -223,6 +236,7 @@ export default function ApplicationDetailPage() {
         tone,
         emphasis: emphasis.trim() || null,
         recipient_name: recipientName.trim() || null,
+        selected_links: selectedLinks,
       });
       setCoverLetter(generated);
       setEditedContent(generated.content);
@@ -342,6 +356,8 @@ export default function ApplicationDetailPage() {
                     tone={tone}
                     emphasis={emphasis}
                     recipientName={recipientName}
+                    professionalLinks={professionalLinks}
+                    selectedLinks={selectedLinks}
                     editedContent={editedContent}
                     letterDirty={letterDirty}
                     generatingLetter={generatingLetter}
@@ -351,6 +367,7 @@ export default function ApplicationDetailPage() {
                     onToneChange={setTone}
                     onEmphasisChange={setEmphasis}
                     onRecipientNameChange={setRecipientName}
+                    onSelectedLinksChange={setSelectedLinks}
                     onContentChange={(v) => {
                       setEditedContent(v);
                       setLetterDirty(true);

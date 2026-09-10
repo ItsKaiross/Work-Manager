@@ -79,6 +79,47 @@ async def _ensure_cover_letters_table(conn):
         )
         await conn.commit()
 
+        await cur.execute(
+            """
+            SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_schema = DATABASE() AND table_name = 'cover_letters'
+              AND column_name = 'selected_links'
+            """
+        )
+        (count,) = await cur.fetchone()
+        if count == 0:
+            await cur.execute("ALTER TABLE cover_letters ADD COLUMN selected_links JSON NULL")
+            await conn.commit()
+
+
+async def _ensure_user_profiles_table(conn):
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """
+            SELECT COUNT(*) FROM information_schema.tables
+            WHERE table_schema = DATABASE() AND table_name = 'users'
+            """
+        )
+        (user_count,) = await cur.fetchone()
+        if user_count == 0:
+            return
+        await cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS `user_profiles` (
+              `user_id` INT NOT NULL,
+              `resume_url` VARCHAR(1000) NULL,
+              `portfolio_url` VARCHAR(1000) NULL,
+              `github_url` VARCHAR(1000) NULL,
+              `linkedin_url` VARCHAR(1000) NULL,
+              `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`user_id`),
+              CONSTRAINT `fk_user_profiles_user` FOREIGN KEY (`user_id`)
+                REFERENCES `users` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+            """
+        )
+        await conn.commit()
+
 
 async def _ensure_app_settings_table(conn):
     async with conn.cursor() as cur:
@@ -102,4 +143,5 @@ async def run_migrations():
     async with pool.acquire() as conn:
         await _ensure_job_keywords_column(conn)
         await _ensure_app_settings_table(conn)
+        await _ensure_user_profiles_table(conn)
         await _ensure_cover_letters_table(conn)

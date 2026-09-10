@@ -6,6 +6,7 @@ from app.schemas.cover_letter import CoverLetterGenerate, CoverLetterUpdate, Cov
 from app.crud import job_application as crud
 from app.crud import resume as resume_crud
 from app.crud import cover_letter as cover_letter_crud
+from app.crud import profile as profile_crud
 from app.utils.suggestion_generator import generate_preparation_suggestions
 from app.utils.job_summarizer import generate_job_summary
 from app.utils.follow_up import compute_follow_up
@@ -161,6 +162,16 @@ async def get_job_summary(
 
 MIN_DESCRIPTION_LENGTH = 40
 
+
+def _append_missing_links(content: str, links: dict[str, str]) -> str:
+    """Guarantee selected URLs survive model formatting without duplicating them."""
+    missing = [(name, url) for name, url in links.items() if url not in content]
+    if not missing:
+        return content
+    labels = {"resume": "Resume", "portfolio": "Portfolio", "github": "GitHub", "linkedin": "LinkedIn"}
+    block = "\n".join(f"{labels[name]}: {url}" for name, url in missing)
+    return f"{content.rstrip()}\n\n{block}"
+
 @router.post("/{app_id}/cover-letters", response_model=CoverLetterOut, status_code=201)
 async def generate_cover_letter(
     app_id: int,
@@ -186,6 +197,13 @@ async def generate_cover_letter(
     if len(job_description) < MIN_DESCRIPTION_LENGTH:
         raise HTTPException(status_code=409, detail="Add the job description so the letter can be tailored")
 
+    saved_links = await profile_crud.get_professional_links(conn, current_user["id"])
+    selected_links = {
+        link_type: saved_links.get(f"{link_type}_url")
+        for link_type in dict.fromkeys(payload.selected_links)
+        if saved_links.get(f"{link_type}_url")
+    }
+
     try:
         generated = await ai_generate_cover_letter(
             conn,
@@ -199,6 +217,7 @@ async def generate_cover_letter(
             tone=payload.tone,
             emphasis=payload.emphasis,
             recipient_name=payload.recipient_name,
+            professional_links=selected_links,
         )
     except Exception:
         generated = None
@@ -209,6 +228,8 @@ async def generate_cover_letter(
             detail="AI provider is unavailable or returned an unusable draft. Ask an administrator to configure the AI provider or try again.",
         )
 
+    generated["content"] = _append_missing_links(generated["content"], selected_links)
+
     fingerprint = cover_letter_crud.compute_source_fingerprint(
         position=app.get("position", "") or "",
         company=app.get("company", "") or "",
@@ -218,6 +239,7 @@ async def generate_cover_letter(
         tone=payload.tone,
         emphasis=payload.emphasis,
         recipient_name=payload.recipient_name,
+        selected_links=selected_links,
     )
 
     created = await cover_letter_crud.create_cover_letter(
@@ -235,6 +257,7 @@ async def generate_cover_letter(
         model=generated.get("model") or GROQ_MODEL,
         prompt_version=COVER_LETTER_PROMPT_VERSION,
         source_fingerprint=fingerprint,
+        selected_links=selected_links,
     )
     return created
 

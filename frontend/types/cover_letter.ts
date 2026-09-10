@@ -24,4 +24,5 @@ export interface CoverLetter extends CoverLetterSummary {
   recipient_name?: string | null;
   model?: string | null;
   prompt_version?: string | null;
+  selected_links: Record<string, string>;
 }

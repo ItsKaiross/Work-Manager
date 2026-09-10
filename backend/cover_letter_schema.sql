@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `cover_letters` (
   `model` VARCHAR(100) NULL,
   `prompt_version` VARCHAR(30) NULL,
   `source_fingerprint` CHAR(64) NULL,
+  `selected_links` JSON NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
