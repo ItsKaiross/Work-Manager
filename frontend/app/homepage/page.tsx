@@ -7,6 +7,7 @@ import ApplicationCard from "@/app/applications/ApplicationCard";
 import ActivityHeatmap from "@/app/homepage/ActivityHeatmap";
 import ApplicationFunnel from "@/app/homepage/ApplicationFunnel";
 import SourceBreakdown from "@/app/homepage/SourceBreakdown";
+import { SummaryCard, StatusCard } from "@/app/homepage/StatCards";
 import { useApplications } from "@/hooks/useApplication";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { getAuthToken } from "@/lib/auth";
@@ -124,54 +125,53 @@ export default function Homepage() {
           <>
             {/* Top-level summary */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-                <p className="text-2xl font-bold">{counts.total}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Applications</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-                <p className="text-2xl font-bold">{thisWeek}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Added This Week</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-                <p className="text-2xl font-bold">{responseRate}%</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Response Rate</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-                <p className="text-2xl font-bold">{counts.offer}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Offers</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-                <p className="text-2xl font-bold">{avgResponseDays !== null ? `${avgResponseDays}d` : "—"}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Avg. Response Time</p>
-              </div>
+              <SummaryCard
+                icon="briefcase"
+                tone="blue"
+                value={counts.total}
+                label="Total Applications"
+                hint={`${submitted} submitted · ${counts.saved} saved`}
+              />
+              <SummaryCard
+                icon="sparkline"
+                tone="violet"
+                value={thisWeek}
+                label="Added This Week"
+                hint="Last 7 days"
+              />
+              <SummaryCard
+                icon="reply"
+                tone="emerald"
+                value={`${responseRate}%`}
+                label="Response Rate"
+                progress={responseRate}
+                hint={`${responded} of ${submitted} submitted`}
+                title="Share of submitted applications that got any response"
+              />
+              <SummaryCard
+                icon="trophy"
+                tone="amber"
+                value={counts.offer}
+                label="Offers"
+                hint={counts.interviewing > 0 ? `${counts.interviewing} interviewing` : "No interviews yet"}
+              />
+              <SummaryCard
+                icon="clock"
+                tone="slate"
+                value={avgResponseDays !== null ? `${avgResponseDays}d` : "—"}
+                label="Avg. Response Time"
+                hint={avgResponseDays !== null ? `Across ${respondedApps.length} replies` : "Not enough data"}
+              />
             </div>
 
             {/* Status breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
-                <p className="text-lg font-semibold">{counts.saved}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Saved</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
-                <p className="text-lg font-semibold">{counts.applied}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Applied</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
-                <p className="text-lg font-semibold">{counts.interviewing}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Interviewing</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
-                <p className="text-lg font-semibold">{counts.offer}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Offer</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
-                <p className="text-lg font-semibold">{counts.rejected}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Rejected</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-center transition-colors">
-                <p className="text-lg font-semibold">{counts.withdrawn}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Withdrawn</p>
-              </div>
+              <StatusCard icon="bookmark" tone="slate" value={counts.saved} label="Saved" total={counts.total} />
+              <StatusCard icon="send" tone="blue" value={counts.applied} label="Applied" total={counts.total} />
+              <StatusCard icon="chat" tone="violet" value={counts.interviewing} label="Interviewing" total={counts.total} />
+              <StatusCard icon="trophy" tone="emerald" value={counts.offer} label="Offer" total={counts.total} />
+              <StatusCard icon="cross" tone="rose" value={counts.rejected} label="Rejected" total={counts.total} />
+              <StatusCard icon="undo" tone="amber" value={counts.withdrawn} label="Withdrawn" total={counts.total} />
             </div>
 
             <div className="mb-8">
