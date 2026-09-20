@@ -95,7 +95,23 @@ export default function ActivityHeatmap({ applications }: { applications: JobApp
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">Activity Heatmap</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-5 h-5 text-blue-500"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <path d="M8 2v4M16 2v4M3 10h18" />
+            <path d="M7.5 14h2v2h-2zM11 14h2v2h-2zM14.5 14h2v2h-2z" fill="currentColor" stroke="none" />
+          </svg>
+          Activity Heatmap
+        </h2>
         <span className="text-xs text-gray-500 dark:text-gray-400">
           {totalCount} application{totalCount === 1 ? "" : "s"} in the last year
         </span>

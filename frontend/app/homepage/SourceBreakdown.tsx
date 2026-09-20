@@ -1,6 +1,41 @@
 "use client";
 import { JobApplication } from "@/types/job_application";
 
+type IconProps = { className?: string };
+
+/* Inline icons (24x24, currentColor) — no extra dependency. */
+const svgProps = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: "1.8",
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  "aria-hidden": true,
+};
+
+const GlobeIcon = (p: IconProps) => (
+  <svg {...svgProps} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" />
+  </svg>
+);
+
+const LinkIcon = (p: IconProps) => (
+  <svg {...svgProps} {...p}>
+    <path d="M10 13a4 4 0 0 0 6 .5l2-2a4 4 0 0 0-5.5-5.5l-1 1" />
+    <path d="M14 11a4 4 0 0 0-6-.5l-2 2A4 4 0 0 0 11.5 18l1-1" />
+  </svg>
+);
+
+const OtherIcon = (p: IconProps) => (
+  <svg {...svgProps} {...p}>
+    <circle cx="5" cy="12" r="1.5" />
+    <circle cx="12" cy="12" r="1.5" />
+    <circle cx="19" cy="12" r="1.5" />
+  </svg>
+);
+
 export default function SourceBreakdown({ applications }: { applications: JobApplication[] }) {
   if (applications.length === 0) return null;
 
@@ -19,18 +54,23 @@ export default function SourceBreakdown({ applications }: { applications: JobApp
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors">
-      <h2 className="text-lg font-semibold mb-4">Top Sources</h2>
+      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <GlobeIcon className="w-5 h-5 text-blue-500" />
+        Top Sources
+      </h2>
 
       <div className="space-y-2">
         {top.map(([source, count]) => {
           const pct = Math.round((count / maxCount) * 100);
+          const Icon = source === "Other" ? OtherIcon : LinkIcon;
           return (
             <div key={source} className="flex items-center gap-3">
               <span
-                className="w-28 text-sm text-gray-600 dark:text-gray-300 truncate shrink-0"
+                className="w-32 text-sm text-gray-600 dark:text-gray-300 shrink-0 flex items-center gap-2"
                 title={source}
               >
-                {source}
+                <Icon className="w-4 h-4 shrink-0 text-gray-400 dark:text-gray-500" />
+                <span className="truncate">{source}</span>
               </span>
               <div className="flex-1 h-4 bg-gray-100 dark:bg-gray-700/40 rounded overflow-hidden">
                 <div
