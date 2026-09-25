@@ -33,7 +33,7 @@ async def get_applications_for_user(conn, user_id: int) -> list[dict]:
                             LIMIT 1
                         )
                     WHERE ja.user_id = %s
-                    ORDER BY ja.created_at DESC
+                    ORDER BY COALESCE(ja.updated_at, ja.created_at) DESC
                     """,
                     (user_id, user_id),
                 )
@@ -46,7 +46,7 @@ async def get_applications_for_user(conn, user_id: int) -> list[dict]:
                 # Fallback: just get applications without match scores
                 print(f"DEBUG: Tables don't exist, using fallback query")
                 await cur.execute(
-                    "SELECT * FROM job_applications WHERE user_id = %s ORDER BY created_at DESC",
+                    "SELECT * FROM job_applications WHERE user_id = %s ORDER BY COALESCE(updated_at, created_at) DESC",
                     (user_id,),
                 )
                 return await cur.fetchall()
@@ -56,7 +56,7 @@ async def get_applications_for_user(conn, user_id: int) -> list[dict]:
             import traceback
             traceback.print_exc()
             await cur.execute(
-                "SELECT * FROM job_applications WHERE user_id = %s ORDER BY created_at DESC",
+                "SELECT * FROM job_applications WHERE user_id = %s ORDER BY COALESCE(updated_at, created_at) DESC",
                 (user_id,),
             )
             return await cur.fetchall()
